@@ -482,6 +482,16 @@ const Interface = () => {
           .slot-machine-container:hover .slot-machine-char::after {
             transform: translateY(-100%);
           }
+          @keyframes slot-cycle {
+            0%, 20% { transform: translateY(0); }
+            45%, 65% { transform: translateY(-100%); }
+            90%, 100% { transform: translateY(0); }
+          }
+          .slot-machine-infinite .slot-machine-char span,
+          .slot-machine-infinite .slot-machine-char::after {
+            animation: slot-cycle 4s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+            animation-delay: var(--delay, 0s);
+          }
           .footer-text-anim {
             transition: opacity 0.8s ease-out, transform 0.8s ease-out;
           }
@@ -530,7 +540,7 @@ const Interface = () => {
         {/* Using divs for layout and spans for specific styling */}
         <div style={{ fontFamily: "'Staatliches', sans-serif", lineHeight: '1' }}>
           CREATIVE{' '}
-          <span className="slot-machine-container" style={{ display: 'inline-block' }}>
+          <span className="slot-machine-container slot-machine-infinite" style={{ display: 'inline-block' }}>
             {'DESIGNER'.split('').map((char, i) => (
               <span
                 key={i}
