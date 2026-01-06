@@ -1,9 +1,10 @@
 // --- MAIN APP COMPONENT ---
 
-import { FC, useState, useEffect, useCallback, useRef } from 'react';
+import type { FC, CSSProperties } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Stars from './Stars';
 import SlotMachineText from './SlotMachineText';
+import { useState, useEffect, useRef } from 'react';
 import GlobeCanvas from './Globe';
 
 const CursorFollower = () => {
@@ -31,143 +32,151 @@ const CursorFollower = () => {
 };
 
 const App: FC = () => {
+
   const text = "create design develop deploy debug innovate";
-  
-  // State Management
+  const marqueeVariants = {
+    animate: {
+      x: [0, -1300], // Adjust this value based on text length and font size
+      transition: {
+        repeat: Infinity,
+        repeatType: "loop" as const,
+        duration: 20,
+        ease: "linear",
+      },
+    },
+  };
+
   const [isWebDevVisible, setIsWebDevVisible] = useState(false);
   const [isStudioVisible, setIsStudioVisible] = useState(false);
   const [isStudioMovedToTop, setIsStudioMovedToTop] = useState(false);
   const [isGlobeZoomed, setIsGlobeZoomed] = useState(false);
-  const [isAnimating, setIsAnimating] = useState(false); // New: prevents scroll spam
 
-  // 1. Memoized Scroll Handler
-  const handleNavigation = useCallback((direction: 'down' | 'up') => {
-    if (isAnimating) return;
+  const pageVariants = {
+    initial: {
+      opacity: 0,
+    },
+    animate: {
+      opacity: 1,
+      transition: { duration: 0.8, ease: "easeInOut" },
+    },
+    exit: {
+      opacity: 0,
+      transition: { duration: 0.8, ease: "easeInOut" },
+    },
+  };
 
-    if (direction === 'down') {
-      if (!isWebDevVisible) {
-        setIsWebDevVisible(true);
-      } else if (!isStudioVisible) {
+  const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+    if (e.deltaY > 0) { // Scrolling down
+      if (!isStudioVisible) {
         setIsStudioVisible(true);
-        // Add a small lock to prevent skipping states
-        setIsAnimating(true);
-        setTimeout(() => setIsAnimating(false), 1000);
       } else {
-        setIsGlobeZoomed(false);
+        setIsGlobeZoomed(false); // Zoom out
       }
-    } else {
+    } else if (e.deltaY < 0) { // Scrolling up
       if (isStudioVisible && isStudioMovedToTop) {
-        setIsGlobeZoomed(true);
+        setIsGlobeZoomed(true); // Zoom in
       }
     }
-  }, [isWebDevVisible, isStudioVisible, isStudioMovedToTop, isAnimating]);
+  };
 
-  // 2. Production-safe Event Listener
-  useEffect(() => {
-    const onWheel = (e: WheelEvent) => {
-      if (Math.abs(e.deltaY) < 15) return; // Threshold for trackpads
-      handleNavigation(e.deltaY > 0 ? 'down' : 'up');
-    };
-
-    window.addEventListener("wheel", onWheel, { passive: true });
-    return () => window.removeEventListener("wheel", onWheel);
-  }, [handleNavigation]);
-
-  // 3. Slot Machine Transition logic
   useEffect(() => {
     if (isStudioVisible && !isStudioMovedToTop) {
       const timer = setTimeout(() => {
         setIsStudioMovedToTop(true);
-      }, 2500);
+      }, 2500); // Delay to allow slot machine animation to finish
+
       return () => clearTimeout(timer);
     }
   }, [isStudioVisible, isStudioMovedToTop]);
 
-  const pageVariants = {
-    initial: { opacity: 0 },
-    animate: { opacity: 1, transition: { duration: 0.8 } },
-    exit: { opacity: 0, transition: { duration: 0.5 } },
-  };
-
   return (
-    <div className="relative h-screen w-full overflow-hidden bg-white">
+    <>
+      {/* Import fonts from Google Fonts */}
       <style>
         {`
           @import url('https://fonts.googleapis.com/css2?family=Inter:wght@200;900&family=Playfair+Display:ital,wght@1,700&display=swap');
-          body { margin: 0; overflow: hidden; }
+          html, body {
+            overflow: hidden;
+          }
         `}
       </style>
-
-      <AnimatePresence mode="wait">
-        {!isWebDevVisible ? (
-          <motion.div
-            key="marquee"
-            className="absolute inset-0 flex items-center cursor-pointer"
-            variants={pageVariants}
-            initial="initial"
-            animate="animate"
-            exit="exit"
-            onClick={() => setIsWebDevVisible(true)}
-          >
-            <CursorFollower />
-            <Stars color="black" />
-            <div className="w-full whitespace-nowrap overflow-hidden">
-              <motion.h1 
-                className="inline-block text-9xl font-semibold text-black select-none"
-                animate={{ x: [0, -1300] }}
-                transition={{ repeat: Infinity, duration: 20, ease: "linear" }}
-              >
-                {text}&nbsp;&nbsp;&nbsp;{text}&nbsp;&nbsp;&nbsp;
-              </motion.h1>
-            </div>
-          </motion.div>
-        ) : (
-          <motion.div
-            key="webdev"
-            className={`absolute inset-0 flex transition-all duration-1000 bg-black text-white font-['Inter'] ${
-              isStudioMovedToTop ? "items-start p-12" : "items-center justify-center"
-            }`}
-            variants={pageVariants}
-            initial="initial"
-            animate="animate"
-            exit="exit"
-          >
-            <Stars color="white" />
-            <AnimatePresence mode="wait">
-              {!isStudioVisible ? (
-                <motion.h1 
-                  key="webdev-text" 
-                  exit={{ opacity: 0, y: -20 }}
-                  className="text-9xl flex items-baseline"
-                >
-                  <span className="font-extralight">WEB</span>
-                  <span className="font-['Playfair_Display'] italic font-bold ml-4">-developer</span>
-                </motion.h1>
-              ) : (
+      <div className="relative h-screen">
+        <AnimatePresence initial={false}>
+          {!isWebDevVisible ? (
+            <motion.div
+              key="marquee"
+              onClick={() => setIsWebDevVisible(true)}
+              className="absolute inset-0 w-screen h-screen flex items-center bg-white cursor-pointer"
+              variants={pageVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+            >
+              <CursorFollower />
+              <Stars color="black" />
+              <div className="w-full whitespace-nowrap overflow-hidden">
                 <motion.h1
-                  key="rk-studio-text"
-                  layout
-                  className={`flex items-baseline ${isStudioMovedToTop ? "text-2xl" : "text-9xl"}`}
+                  className="inline-block text-9xl font-semibold text-black select-none"
+                  variants={marqueeVariants}
+                  animate="animate"
                 >
-                  <SlotMachineText text="RK" className="font-extralight" />
-                  <SlotMachineText text=" -studio" className="font-['Playfair_Display'] italic font-bold ml-4" />
+                  {text}&nbsp;&nbsp;&nbsp;{text}&nbsp;&nbsp;&nbsp;
                 </motion.h1>
+              </div>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="webdev"
+              className={`absolute inset-0 w-screen h-screen flex bg-black text-white font-['Inter'] transition-all duration-1000 ease-in-out ${
+                isStudioMovedToTop
+                  ? "items-start justify-start p-8 md:p-12"
+                  : "justify-center items-center"
+              }`}
+              variants={pageVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              onWheel={handleWheel}
+              layout
+            >
+              <Stars color="white" />
+              <AnimatePresence mode="wait">
+                {!isStudioVisible ? (
+                  <motion.h1
+                    key="webdev-text"
+                    exit={{ opacity: 0, y: -20 }}
+                    className="flex items-baseline text-9xl"
+                  >
+                    <span className="font-extralight">WEB</span>
+                    <span className="font-['Playfair_Display'] italic font-bold ml-4">-developer</span>
+                  </motion.h1>
+                ) : (
+                  <motion.h1
+                    key="rk-studio-text"
+                    className={`flex items-baseline ${isStudioMovedToTop ? "text-2xl" : "text-9xl"}`}
+                    layout
+                    transition={{ duration: 1, ease: "easeOut" }}
+                  >
+                    <SlotMachineText text="RK" className="font-extralight" />
+                    <SlotMachineText text=" -studio" className="font-['Playfair_Display'] italic font-bold ml-4" />
+                  </motion.h1>
+                )}
+              </AnimatePresence>
+              {isStudioMovedToTop && (
+                <motion.div
+                  className="absolute inset-0"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 1, delay: 0.5 }}
+                >
+                  <GlobeCanvas isZoomed={isGlobeZoomed} />
+                </motion.div>
               )}
-            </AnimatePresence>
-
-            {isStudioMovedToTop && (
-              <motion.div 
-                className="absolute inset-0 z-[-1]"
-                initial={{ opacity: 0 }} 
-                animate={{ opacity: 1 }}
-              >
-                <GlobeCanvas />
-              </motion.div>
-            )}
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </>
   );
 };
 
