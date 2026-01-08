@@ -1,7 +1,6 @@
-// --- MAIN APP COMPONENT ---
-
-import type { FC, CSSProperties } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+// --- MAIN APP COMPONENT --
+import type { FC } from 'react';
+import { motion, AnimatePresence,type Variants } from 'framer-motion';
 import Stars from './Stars';
 import SlotMachineText from './SlotMachineText';
 import { useState, useEffect, useRef } from 'react';
@@ -34,9 +33,9 @@ const CursorFollower = () => {
 const App: FC = () => {
 
   const text = "create design develop deploy debug innovate";
-  const marqueeVariants = {
+  const marqueeVariants :Variants = {
     animate: {
-      x: [0, -1300], // Adjust this value based on text length and font size
+      x: ["0%", "-50%"], // Adjust this value based on text length and font size
       transition: {
         repeat: Infinity,
         repeatType: "loop" as const,
@@ -51,18 +50,24 @@ const App: FC = () => {
   const [isStudioMovedToTop, setIsStudioMovedToTop] = useState(false);
   const [isGlobeZoomed, setIsGlobeZoomed] = useState(false);
 
-  const pageVariants = {
-    initial: {
-      opacity: 0,
+ const pageVariants = {
+  initial: {
+    opacity: 0,
+  },
+  animate: {
+    opacity: 1,
+    transition: { 
+      duration: 0.8, 
+      ease: "easeInOut" as const // Added 'as const' here
     },
-    animate: {
-      opacity: 1,
-      transition: { duration: 0.8, ease: "easeInOut" },
+  },
+  exit: {
+    opacity: 0,
+    transition: { 
+      duration: 0.8, 
+      ease: "easeInOut" as const // Added 'as const' here
     },
-    exit: {
-      opacity: 0,
-      transition: { duration: 0.8, ease: "easeInOut" },
-    },
+   },
   };
 
   const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {

@@ -1,4 +1,4 @@
-import { useRef, FC, useEffect, useMemo, useState } from 'react';
+import { useRef, type FC, useEffect, useMemo, useState } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Points, PointMaterial, ScrollControls, useScroll, Scroll, Line } from '@react-three/drei';
 import * as THREE from 'three';
@@ -81,7 +81,7 @@ const Globe = () => {
   );
 };
 
-const GlobePositioner = ({ globeRef }: { globeRef: React.MutableRefObject<THREE.Group> }) => {
+const GlobePositioner = ({ globeRef: _globeRef }: { globeRef: React.MutableRefObject<THREE.Group> }) => {
   const scroll = useScroll();
   const isMobile = useIsMobile();
 
@@ -396,12 +396,6 @@ const Interface = () => {
     fontFamily: "'Staatliches', sans-serif",
   };
 
-  const buttonContainerStyle: React.CSSProperties = {
-    marginTop: '1.5rem',
-    display: 'flex',
-    gap: '1rem',
-    justifyContent: 'flex-end',
-  };
 
   const buttonStyle: React.CSSProperties = {
     background: 'rgba(255, 255, 255, 0.1)',
@@ -703,7 +697,11 @@ const Interface = () => {
   );
 };
 
-const GlobeCanvas: FC = () => {
+interface GlobeCanvasProps {
+  isZoomed: boolean;
+}
+
+const GlobeCanvas: FC<GlobeCanvasProps> = ({ isZoomed: _isZoomed }) => {
   const globeRef = useRef<THREE.Group>(null!);
   const isMobile = useIsMobile();
 
