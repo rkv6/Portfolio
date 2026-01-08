@@ -124,6 +124,7 @@ const App: FC = () => {
                   className="inline-block text-9xl font-semibold text-black select-none"
                   variants={marqueeVariants}
                   animate="animate"
+                  style={{ willChange: 'transform' }}
                 >
                   {text}&nbsp;&nbsp;&nbsp;{text}&nbsp;&nbsp;&nbsp;
                 </motion.h1>
