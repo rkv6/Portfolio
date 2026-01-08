@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, CSSProperties } from "react";
+import { useState, useEffect, useRef, type CSSProperties } from "react";
 import { motion, useMotionValue, useTransform, AnimatePresence } from "framer-motion";
 
 interface Star {
@@ -27,7 +27,7 @@ const Stars = ({ color }: { color: 'white' | 'black' }) => {
   const [trailStars, setTrailStars] = useState<Star[]>([]);
   const [staticStars, setStaticStars] = useState<Star[]>([]);
   const [clickStars, setClickStars] = useState<Star[]>([]);
-  const [showScrollToExplore, setShowScrollToExplore] = useState(true);
+  const [showScrollToExplore, _setShowScrollToExplore] = useState(true);
   const starId = useRef(0);
   const lastMoveTime = useRef(0);
   const throttleInterval = 20; // ms
@@ -104,8 +104,7 @@ const Stars = ({ color }: { color: 'white' | 'black' }) => {
     borderRadius: "8px",
     pointerEvents: "none",
     position: "absolute",
-    translateX: "15px",
-    translateY: "15px",
+    transform: "translateX(15px) translateY(15px)",
     textTransform: "uppercase",
     fontSize: "12px",
     letterSpacing: "0.1em",
