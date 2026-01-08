@@ -485,6 +485,7 @@ const Interface = () => {
           .slot-machine-infinite .slot-machine-char::after {
             animation: slot-cycle 4s cubic-bezier(0.5, 0, 0.5, 1) infinite;
             animation-delay: var(--delay, 0s);
+            transition: none;
           }
           .footer-text-anim {
             transition: opacity 0.8s ease-out, transform 0.8s ease-out;
