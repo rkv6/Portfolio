@@ -1,4 +1,4 @@
-import { useRef, type FC, useEffect, useMemo, useState } from 'react';
+import React, { useRef, type FC, useEffect, useMemo, useState } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Points, PointMaterial, ScrollControls, useScroll, Scroll, Line } from '@react-three/drei';
 import * as THREE from 'three';

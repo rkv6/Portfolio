@@ -1,9 +1,8 @@
 // --- MAIN APP COMPONENT --
-import type { FC } from 'react';
+import React, { type FC, useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence,type Variants } from 'framer-motion';
 import Stars from './Stars';
 import SlotMachineText from './SlotMachineText';
-import { useState, useEffect, useRef } from 'react';
 import GlobeCanvas from './Globe';
 
 const CursorFollower = () => {
