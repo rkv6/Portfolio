@@ -7,6 +7,7 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+dist/assets/index-Dl4LTYvG.js
 node_modules
 dist
 dist-ssr
