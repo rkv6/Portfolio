@@ -2,6 +2,7 @@
   "name": "3d-app",
   "private": true,
   "version": "0.0.0",
+  "author": "Rithin k varghese <rithink604@gmail.com>",
   "type": "module",
   "scripts": {
     "dev": "vite",
