@@ -30,20 +30,21 @@ const CursorFollower = () => {
   );
 };
 
+const marqueeVariants: Variants = {
+  scroll: {
+    x: ["-25%", "0%"], // Moves Left to Right
+    transition: {
+      repeat: Infinity,
+      repeatType: "loop",
+      duration: 20, // Lower this number to make it faster
+      ease: "linear",
+    },
+  },
+};
+
 const App: FC = () => {
 
   const text = "create design develop deploy debug innovate";
-  const marqueeVariants :Variants = {
-    animate: {
-      x: ["0%", "-50%"], // Adjust this value based on text length and font size
-      transition: {
-        repeat: Infinity,
-        repeatType: "loop" as const,
-        duration: 20,
-        ease: "linear",
-      },
-    },
-  };
 
   const [isWebDevVisible, setIsWebDevVisible] = useState(false);
   const [isStudioVisible, setIsStudioVisible] = useState(false);
@@ -123,10 +124,10 @@ const App: FC = () => {
                 <motion.h1
                   className="inline-block text-9xl font-semibold text-black select-none"
                   variants={marqueeVariants}
-                  animate="animate"
+                  animate="scroll"
                   style={{ willChange: 'transform' }}
                 >
-                  {text}&nbsp;&nbsp;&nbsp;{text}&nbsp;&nbsp;&nbsp;
+                  {text}&nbsp;&nbsp;&nbsp;{text}&nbsp;&nbsp;&nbsp;{text}&nbsp;&nbsp;&nbsp;{text}&nbsp;&nbsp;&nbsp;
                 </motion.h1>
               </div>
             </motion.div>
