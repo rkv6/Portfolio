@@ -537,7 +537,7 @@ const Interface: FC<InterfaceProps> = ({ onOpenPanel }) => {
     flexDirection: 'column',
     justifyContent: short ? 'center' : 'flex-start',
     paddingTop: isMobile ? '14vh' : topCta ? 'clamp(5rem, 9vh, 8rem)' : !short ? 'clamp(4.5rem, 12vh, 10rem)' : undefined,
-    paddingBottom: isMobile ? '18vh' : undefined,
+    paddingBottom: isMobile ? 'max(18vh, 9rem)' : undefined,
     boxSizing: 'border-box',
     alignItems: 'center',
     pointerEvents: 'auto',
@@ -868,20 +868,20 @@ const Interface: FC<InterfaceProps> = ({ onOpenPanel }) => {
           </span>
         </h2>
         
-        <div ref={footerColsRef} style={{ position: isMobile ? 'relative' : 'absolute', bottom: isMobile ? 'auto' : short ? 'clamp(2.5rem, 7vh, 5rem)' : 'clamp(5rem, 24vh, 14rem)', right: isMobile ? 'auto' : 'clamp(1.5rem, 5vw, 5rem)', display: 'flex', flexDirection: 'row', alignItems: 'flex-start', gap: isMobile ? '1.25rem' : 'clamp(2rem, 10vw, 15rem)', justifyContent: 'flex-end', width: isMobile ? '100%' : 'auto', boxSizing: 'border-box', paddingRight: isMobile ? '1.5rem' : 0, marginTop: isMobile ? 'auto' : '0' }}>
+        <div ref={footerColsRef} style={{ position: isMobile ? 'relative' : 'absolute', bottom: isMobile ? 'auto' : short ? 'clamp(2.5rem, 7vh, 5rem)' : 'clamp(5rem, 24vh, 14rem)', right: isMobile ? 'auto' : 'clamp(1.5rem, 5vw, 5rem)', display: 'flex', flexDirection: 'row', alignItems: 'flex-start', gap: isMobile ? '1.5rem' : 'clamp(2rem, 10vw, 15rem)', justifyContent: 'flex-end', width: isMobile ? '100%' : 'auto', boxSizing: 'border-box', paddingRight: isMobile ? '1.5rem' : 0, marginTop: isMobile ? 'auto' : '0' }}>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.5rem' }}>
-            <h3 style={{ fontFamily: "'Satoshi', sans-serif", fontSize: isMobile || compact ? 'clamp(1.4rem, 6vw, 2.5rem)' : '2.5rem', color: '#111', margin: 0, textTransform: 'uppercase', letterSpacing: isMobile ? '0.06em' : '0.1em' }}>Contact</h3>
+            <h3 style={{ fontFamily: "'Satoshi', sans-serif", fontSize: isMobile ? 'min(2.5rem, 7.4vw)' : '2.5rem', color: '#111', margin: 0, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Contact</h3>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.5rem' }}>
               {tapReveal ? (
                 // Touch screens: tap "Mail" to slide the address out to its left, same as the hover on a computer.
                 // Only the revealed address opens the mail app.
-                <span className={`email-reveal-container${mailOpen ? ' open' : ''}`} style={{ color: '#111', fontFamily: "'Satoshi', sans-serif", fontSize: 'clamp(0.85rem, 3.6vw, 1rem)' }}>
+                <span className={`email-reveal-container${mailOpen ? ' open' : ''}`} style={{ margin: '-0.75rem 0', color: '#111', fontFamily: "'Satoshi', sans-serif", fontSize: '1rem' }}>
                   <a
                     href="mailto:rithink604@gmail.com"
                     className="email-hidden-text"
                     tabIndex={mailOpen ? 0 : -1}
                     aria-hidden={!mailOpen}
-                    style={{ color: '#111', textDecoration: 'underline', textUnderlineOffset: '0.2em', padding: '0.75rem 0', pointerEvents: mailOpen ? 'auto' : 'none' }}
+                    style={{ color: '#111', textDecoration: 'none', padding: '0.75rem 0', pointerEvents: mailOpen ? 'auto' : 'none' }}
                   >
                     rithink604@gmail.com
                   </a>
@@ -889,7 +889,7 @@ const Interface: FC<InterfaceProps> = ({ onOpenPanel }) => {
                     type="button"
                     aria-expanded={mailOpen}
                     onClick={() => setMailOpen((o) => !o)}
-                    style={{ background: 'none', border: 'none', padding: '0.75rem 0', minHeight: '44px', cursor: 'pointer', color: 'inherit', font: 'inherit' }}
+                    style={{ background: 'none', border: 'none', padding: '0.75rem 0', cursor: 'pointer', color: 'inherit', font: 'inherit', lineHeight: 'inherit' }}
                   >
                     Mail
                   </button>
@@ -908,7 +908,7 @@ const Interface: FC<InterfaceProps> = ({ onOpenPanel }) => {
           </div>
           
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.5rem' }}>
-            <h3 style={{ fontFamily: "'Satoshi', sans-serif", fontSize: isMobile || compact ? 'clamp(1.4rem, 6vw, 2.5rem)' : '2.5rem', color: '#111', margin: 0, textTransform: 'uppercase', letterSpacing: isMobile ? '0.06em' : '0.1em' }}>Socials</h3>
+            <h3 style={{ fontFamily: "'Satoshi', sans-serif", fontSize: isMobile ? 'min(2.5rem, 7.4vw)' : '2.5rem', color: '#111', margin: 0, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Socials</h3>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.5rem' }}>
               {INSTAGRAM_URL && (
               <a href={INSTAGRAM_URL} target="_blank" rel="noopener noreferrer" className="slot-machine-container" style={{ color: '#111', textDecoration: 'none', fontFamily: "'Satoshi', sans-serif", fontSize: '1rem' }}>
@@ -936,11 +936,11 @@ const Interface: FC<InterfaceProps> = ({ onOpenPanel }) => {
             </div>
           </div>
         </div>
-        <div ref={footerTextRef} className="footer-text-anim" style={{ position: 'absolute', bottom: '.5rem', left: isMobile || compact ? '1.5rem' : '55%', right: isMobile || compact ? '1.5rem' : '3rem', opacity: 0, transform: 'translateX(-50px)' }}>
+        <div ref={footerTextRef} className="footer-text-anim" style={{ position: 'absolute', bottom: isMobile ? 'calc(4.5rem + env(safe-area-inset-bottom, 0px))' : '.5rem', left: compact && sideBySide ? 'calc(50% + 14vh + 1.25rem)' : isMobile || compact ? '1.5rem' : '55%', right: isMobile || compact ? '1.5rem' : '3rem', opacity: 0, transform: 'translateX(-50px)' }}>
           <div style={{ width: '100%', height: '1px', backgroundColor: '#111', opacity: 0.2, marginBottom: '0.5rem' }} />
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: "'Satoshi', sans-serif", fontSize: '0.75rem', color: '#111', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', whiteSpace: 'nowrap', fontFamily: "'Satoshi', sans-serif", fontSize: isMobile ? '0.65rem' : '0.75rem', color: '#111', textTransform: 'uppercase', letterSpacing: isMobile ? '0.03em' : '0.05em' }}>
             <span>&copy; {new Date().getFullYear()} rk-studio</span>
-            <span>Kerala, India</span>
+            {!(compact && sideBySide) && <span>Kerala, India</span>}
             <span>9.7268° N, 76.7260° E</span>
           </div>
         </div>
