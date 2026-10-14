@@ -1,5 +1,6 @@
 {
-  "name": "3d-app",
+  "name": "rk-studio-portfolio",
+  "description": "Interactive 3D portfolio for Rithin K Varghese (rk-studio), a freelance web developer.",
   "private": true,
   "version": "0.0.0",
   "author": "Rithin k varghese <rithink604@gmail.com>",
