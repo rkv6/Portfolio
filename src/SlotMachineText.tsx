@@ -8,14 +8,14 @@ interface SlotMachineTextProps {
 
 const SlotMachineText: React.FC<SlotMachineTextProps> = ({ text, className }) => {
   return (
-    <div className={`flex overflow-hidden relative ${className}`}>
+    <div className={`flex relative ${className}`}>
       {text.split("").map((char, index) => {
         if (char === " " || char === "-") {
           return <span key={index}>&nbsp;{char === "-" ? "-" : ""}</span>;
         }
 
         const variants: Variants = {
-          initial: { y: "100%" },
+          initial: { y: "130%" },
           animate: { 
             y: 0,
             transition: {
@@ -26,8 +26,10 @@ const SlotMachineText: React.FC<SlotMachineTextProps> = ({ text, className }) =>
           },
         };
 
+        // Each letter slides up from behind its own mask. The mask is padded, with matching negative
+        // margins, so tall capitals, descenders and the overhang of italic letters are never clipped.
         return (
-          <div key={index} className="relative h-[1em] overflow-hidden flex flex-col">
+          <div key={index} className="relative flex flex-col overflow-hidden leading-[1.2] px-[0.08em] -mx-[0.08em] py-[0.12em] -my-[0.12em]">
             <motion.span 
               variants={variants} 
               initial="initial" 
