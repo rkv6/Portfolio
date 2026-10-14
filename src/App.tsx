@@ -166,7 +166,7 @@ const App: FC = () => {
               )}
               <Stars color="black" />
               <div className="w-full whitespace-nowrap overflow-hidden">
-                <h1 className="marquee-track inline-block text-9xl font-semibold text-black select-none">
+                <h1 className="marquee-track inline-block text-[clamp(3rem,12vw,8rem)] font-semibold text-black select-none">
                   {text}&nbsp;&nbsp;&nbsp;{text}&nbsp;&nbsp;&nbsp;{text}&nbsp;&nbsp;&nbsp;{text}&nbsp;&nbsp;&nbsp;
                 </h1>
               </div>
