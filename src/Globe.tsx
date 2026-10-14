@@ -7,6 +7,7 @@ import * as THREE from 'three';
 import * as random from 'maath/random/dist/maath-random.esm';
 import { AnimatePresence } from 'framer-motion';
 import WorkPanel from './sections/WorkPanel';
+import { useIsTouch } from './useIsTouch';
 // It's good practice to import icons if you use them, for example from a library like 'react-icons'
 // import { FaHeadphones, FaBars, FaPlay, FaForward, FaUpload, FaCog } from 'react-icons/fa';
 
@@ -339,6 +340,14 @@ const Interface: FC<InterfaceProps> = ({ onOpenPanel }) => {
   // compact = tablets and short landscape windows: wider than a phone, too tight for the wide desktop hero.
   const compact = !isMobile && (vp.w < 1100 || vp.h < 600);
   const short = vp.h < 600;
+  // Phones and portrait tablets: Hire me moves into the header row, and the footer headline sits above the globe.
+  const topCta = isMobile || (compact && !short);
+  const touch = useIsTouch();
+  const tapReveal = touch || isMobile || compact;
+  const [mailOpen, setMailOpen] = useState(false);
+  const reduceMotion = useRef(typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  const footerHeadRef = useRef<HTMLHeadingElement>(null);
+  const footerColsRef = useRef<HTMLDivElement>(null);
   const sideBySide = vp.w >= 900 || short;
   const leftRef = useRef<HTMLDivElement>(null);
   const headlineRef = useRef<HTMLDivElement>(null);
@@ -362,7 +371,7 @@ const Interface: FC<InterfaceProps> = ({ onOpenPanel }) => {
       if (isMobile) {
         const opacityMobile = THREE.MathUtils.smoothstep(scroll.offset, 0.2, 0.3);
         headlineRef.current.style.opacity = String(opacityMobile);
-        headlineRef.current.style.transform = 'none';
+        headlineRef.current.style.transform = reduceMotion.current ? 'none' : `translateY(${(1 - opacityMobile) * 18}px)`;
       } else {
         headlineRef.current.style.opacity = String(opacity);
         headlineRef.current.style.transform = `translateY(-${offset}px)`;
@@ -372,7 +381,7 @@ const Interface: FC<InterfaceProps> = ({ onOpenPanel }) => {
       if (isMobile) {
         const opacityMobile = THREE.MathUtils.smoothstep(scroll.offset, 0.08, 0.18);
         introRef.current.style.opacity = String(opacityMobile);
-        introRef.current.style.transform = 'none';
+        introRef.current.style.transform = reduceMotion.current ? 'none' : `translateY(${(1 - opacityMobile) * 18}px)`;
       } else {
         introRef.current.style.opacity = String(opacity);
         introRef.current.style.transform = `translateY(-${offset}px)`;
@@ -398,12 +407,26 @@ const Interface: FC<InterfaceProps> = ({ onOpenPanel }) => {
       navRef.current.style.pointerEvents = visible ? 'auto' : 'none';
     }
 
-    // On desktop the About block and the footer share some scroll distance, so fade About out
-    // before the footer takes over. This stops About text showing through the footer headline.
-    if (aboutRef.current && !isMobile) {
-      const fade = 1 - scroll.range(0.62, 0.12);
-      aboutRef.current.style.opacity = String(fade);
-      aboutRef.current.style.visibility = fade < 0.02 ? 'hidden' : 'visible';
+    // About: eases in as it arrives. On desktop it also fades out before the footer takes over,
+    // which stops About text showing through the footer headline.
+    if (aboutRef.current) {
+      const enter = THREE.MathUtils.smoothstep(scroll.offset, isMobile ? 0.3 : 0.12, isMobile ? 0.44 : 0.4);
+      const fade = isMobile ? 1 : 1 - scroll.range(0.62, 0.12);
+      const o = enter * fade;
+      aboutRef.current.style.opacity = String(o);
+      aboutRef.current.style.transform = reduceMotion.current ? 'none' : `translateY(${(1 - enter) * 28}px)`;
+      aboutRef.current.style.visibility = o < 0.02 ? 'hidden' : 'visible';
+    }
+
+    // Footer: the headline rises into place, then the contact details follow it.
+    const f1 = THREE.MathUtils.smoothstep(scroll.offset, isMobile ? 0.68 : 0.5, isMobile ? 0.86 : 0.78);
+    const f2 = THREE.MathUtils.smoothstep(scroll.offset, isMobile ? 0.74 : 0.56, isMobile ? 0.92 : 0.86);
+    if (footerHeadRef.current) {
+      footerHeadRef.current.style.transform = reduceMotion.current ? 'none' : `translateY(${(1 - f1) * 40}px)`;
+    }
+    if (footerColsRef.current) {
+      footerColsRef.current.style.opacity = String(f2);
+      footerColsRef.current.style.transform = reduceMotion.current ? 'none' : `translateY(${(1 - f2) * 24}px)`;
     }
   });
 
@@ -422,7 +445,9 @@ const Interface: FC<InterfaceProps> = ({ onOpenPanel }) => {
   const headlineStyle: React.CSSProperties = {
     position: compact ? 'relative' : 'absolute',
     bottom: isMobile || compact ? 'auto' : '5rem',
-    top: isMobile ? '120vh' : 'auto',
+    // On phones the headline sits low on the second screen, clear of the globe and the intro paragraph.
+    top: isMobile ? 'calc(200vh - 3.5rem)' : 'auto',
+    translate: isMobile ? '0 -100%' : undefined,
     right: isMobile || compact ? 'auto' : '5rem',
     left: isMobile ? '1.5rem' : 'auto',
     maxWidth: isMobile ? 'calc(100% - 3rem)' : compact ? '100%' : '600px',
@@ -510,7 +535,10 @@ const Interface: FC<InterfaceProps> = ({ onOpenPanel }) => {
     height: '100vh',
     display: 'flex',
     flexDirection: 'column',
-    justifyContent: 'center',
+    justifyContent: topCta ? 'flex-start' : 'center',
+    paddingTop: isMobile ? '14vh' : topCta ? 'clamp(5rem, 9vh, 8rem)' : undefined,
+    paddingBottom: isMobile ? '18vh' : undefined,
+    boxSizing: 'border-box',
     alignItems: 'center',
     pointerEvents: 'auto',
   };
@@ -574,6 +602,23 @@ const Interface: FC<InterfaceProps> = ({ onOpenPanel }) => {
       {navbar}
       <style>
         {`
+          :root { --ease-out: cubic-bezier(0.23, 1, 0.32, 1); }
+          /* Entrances: translate only, so they never fight the scroll-driven transform and opacity. */
+          @keyframes rise { from { translate: 0 16px; } to { translate: 0 0; } }
+          .rise { animation: rise 0.6s var(--ease-out) both; }
+          @keyframes hire-pop { from { opacity: 0; scale: 0.94; } to { opacity: 1; scale: 1; } }
+          .hire-pop { animation: hire-pop 0.4s var(--ease-out) 0.2s both; transition: transform 0.16s var(--ease-out); }
+          @keyframes mail-pop { from { opacity: 0; translate: 0 8px; } to { opacity: 1; translate: 0 0; } }
+          .mail-pop { animation: mail-pop 0.2s var(--ease-out) both; }
+          /* Press feedback on touch screens. */
+          .slot-machine-container, .site-nav button { transition: transform 0.16s var(--ease-out); }
+          @media (hover: none) {
+            .slot-machine-container:active, .hire-pop:active, .site-nav button:active { transform: scale(0.97); }
+          }
+          @media (prefers-reduced-motion: reduce) {
+            .rise, .hire-pop, .mail-pop { animation: none; }
+            .slot-machine-container, .site-nav button, .hire-pop { transition: none; }
+          }
           .site-nav button { opacity: 0.75; transition: opacity 0.2s ease; }
           .site-nav button:hover, .site-nav button:focus-visible { opacity: 1; }
           .site-nav button:focus-visible { outline: 1px solid currentColor; outline-offset: 4px; }
@@ -650,18 +695,41 @@ const Interface: FC<InterfaceProps> = ({ onOpenPanel }) => {
           }
         `}
       </style>
-      <div style={{ position: 'absolute', top: '1rem', left: isMobile ? '1.5rem' : '3.1rem', pointerEvents: 'auto' }}>
+      <div
+        className="rise"
+        style={{
+          position: 'absolute',
+          top: '1rem',
+          left: isMobile ? '1.5rem' : topCta ? 'clamp(1.5rem, 5vw, 5rem)' : '3.1rem',
+          right: topCta ? (isMobile ? '1.5rem' : 'clamp(1.5rem, 5vw, 5rem)') : undefined,
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          gap: '1rem',
+          pointerEvents: 'auto',
+        }}
+      >
         <div style={{ display: 'flex', flexDirection: 'column' }}>
           <span style={{marginTop: '1rem',marginLeft: '10', fontSize: short ? '1.35rem' : 'clamp(1.9rem, 5vw, 2.5rem)', fontWeight: '400', fontFamily: "'Stint Ultra Condensed', serif", color: 'white', letterSpacing: '0.02em', textTransform: 'uppercase', lineHeight: '1' }}>
             Rithin K Varghese
           </span>
           <span style={{ fontSize: short ? '0.85rem' : '1.4rem', fontFamily: "'Satoshi', sans-serif", color: '#aaaaaa', letterSpacing: '0.05em' }}>portfolio'26</span>
         </div>
+        {topCta && (
+          <button
+            type="button"
+            className="hire-pop"
+            onClick={() => (window.location.href = 'mailto:rithink604@gmail.com')}
+            style={{ background: 'white', color: 'black', border: '1px solid white', borderRadius: '4px', padding: '0.6rem 1.1rem', minHeight: '44px', fontSize: '1rem', fontWeight: 600, fontFamily: "'Satoshi', sans-serif", cursor: 'pointer', flexShrink: 0, whiteSpace: 'nowrap' }}
+          >
+            Hire me →
+          </button>
+        )}
       </div>
       <div style={heroStackStyle}>
       <div ref={leftRef} style={textContainerStyle} >
         {/* Using divs for layout and spans for specific styling */}
-        <div style={{ fontFamily: "'Staatliches', sans-serif", lineHeight: '1' }}>
+        <div className="rise" style={{ fontFamily: "'Staatliches', sans-serif", lineHeight: '1', animationDelay: '60ms' }}>
           CREATIVE{' '}
           <span className="slot-machine-container slot-machine-infinite" style={{ display: 'inline-block' }}>
             {'DESIGNER'.split('').map((char, i) => (
@@ -680,7 +748,7 @@ const Interface: FC<InterfaceProps> = ({ onOpenPanel }) => {
             ))}
           </span>
         </div>
-        <div style={{ fontFamily: "'Staatliches', sans-serif", lineHeight: '1' }}>
+        <div className="rise" style={{ fontFamily: "'Staatliches', sans-serif", lineHeight: '1', animationDelay: '130ms' }}>
           <span style={{ fontFamily: "'Stint Ultra Condensed', serif", fontWeight: 400, fontSize: '0.7em', verticalAlign: 'middle' }}>AND</span> DEVELOPER
         </div>
       </div>
@@ -714,6 +782,7 @@ const Interface: FC<InterfaceProps> = ({ onOpenPanel }) => {
           I move people, not just <span style={{ fontFamily: "'Stint Ultra Condensed', serif", fontSize: 'inherit', fontWeight: '400' }}>screens.</span>
         </h1>
         <div style={{ display: 'flex', flexDirection: 'row', gap: '1rem', marginTop: '1.25rem', flexWrap: 'wrap' }}>
+          {!topCta && (
           <button
             onClick={() => window.location.href = 'mailto:rithink604@gmail.com'}
             style={{ ...buttonStyle, background: 'white', color: 'black', fontSize: btnFont, fontFamily: "'Satoshi', sans-serif" ,fontWeight: '600'}}
@@ -730,6 +799,7 @@ const Interface: FC<InterfaceProps> = ({ onOpenPanel }) => {
               </span>
             ))}
           </button>
+          )}
           <button
             type="button"
             onClick={() => onOpenPanel('work')}
@@ -786,21 +856,32 @@ const Interface: FC<InterfaceProps> = ({ onOpenPanel }) => {
         </div>
       </div>
       <div id="contact" style={footerContainerStyle} className="interactive">
-        <h2 style={{ fontSize: isMobile ? '18vw' : short ? 'min(13vw, 18vh)' : 'min(13vw, 24vh)', fontFamily: "'Staatliches', sans-serif", color: '#111', lineHeight: isMobile ? '1.05' : '1.1', margin: isMobile ? '0 0 2rem 0' : '0 0 min(8rem, 14vh) 0' }}>
+        <h2 ref={footerHeadRef} style={{ fontSize: isMobile ? '18vw' : short ? 'min(13vw, 18vh)' : 'min(13vw, 24vh)', fontFamily: "'Staatliches', sans-serif", color: '#111', lineHeight: isMobile ? '1.05' : '1.1', margin: isMobile ? '0 0 2rem 0' : '0 0 min(8rem, 14vh) 0' }}>
           LET'S WORK{' '}
           <span style={{ fontFamily: "'Stint Ultra Condensed', serif", fontWeight: 200 }}>
             TOGETHER
           </span>
         </h2>
         
-        <div style={{ position: isMobile ? 'relative' : 'absolute', bottom: isMobile ? 'auto' : 'clamp(2.5rem, 7vh, 5rem)', right: isMobile ? 'auto' : 'clamp(1.5rem, 5vw, 5rem)', display: 'flex', flexDirection: 'row', alignItems: 'flex-start', gap: isMobile ? '1.25rem' : 'clamp(2rem, 10vw, 15rem)', justifyContent: isMobile ? 'center' : 'flex-end', width: isMobile ? '100%' : 'auto', marginTop: isMobile ? '2rem' : '0' }}>
+        <div ref={footerColsRef} style={{ position: isMobile ? 'relative' : 'absolute', bottom: isMobile ? 'auto' : tapReveal ? 'clamp(5.5rem, 12vh, 8rem)' : 'clamp(2.5rem, 7vh, 5rem)', right: isMobile ? 'auto' : 'clamp(1.5rem, 5vw, 5rem)', display: 'flex', flexDirection: 'row', alignItems: 'flex-start', gap: isMobile ? '1.25rem' : 'clamp(2rem, 10vw, 15rem)', justifyContent: isMobile ? 'center' : 'flex-end', width: isMobile ? '100%' : 'auto', marginTop: isMobile ? 'auto' : '0' }}>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: isMobile ? 'center' : 'flex-end', gap: '0.5rem' }}>
             <h3 style={{ fontFamily: "'Satoshi', sans-serif", fontSize: isMobile || compact ? 'clamp(1.4rem, 6vw, 2.5rem)' : '2.5rem', color: '#111', margin: 0, textTransform: 'uppercase', letterSpacing: isMobile ? '0.06em' : '0.1em' }}>Contact</h3>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: isMobile ? 'center' : 'flex-end', gap: '0.5rem' }}>
-              <a href="mailto:rithink604@gmail.com" className="email-reveal-container" style={{ color: '#111', textDecoration: 'none', fontFamily: "'Satoshi', sans-serif", fontSize: '1rem' }}>
+              {tapReveal ? (
+                <button
+                  type="button"
+                  aria-expanded={mailOpen}
+                  onClick={() => setMailOpen((o) => !o)}
+                  style={{ background: 'none', border: 'none', padding: '0.5rem 0.75rem', minHeight: '44px', cursor: 'pointer', color: '#111', fontFamily: "'Satoshi', sans-serif", fontSize: '1rem' }}
+                >
+                  Mail
+                </button>
+              ) : (
+                            <a href="mailto:rithink604@gmail.com" className="email-reveal-container" style={{ color: '#111', textDecoration: 'none', fontFamily: "'Satoshi', sans-serif", fontSize: '1rem' }}>
                 <span className="email-hidden-text">rithink604@gmail.com</span>
                 <span>Mail</span>
               </a>
+              )}
               <a href="tel:+918086162298" className="email-reveal-container" style={{ color: '#111', textDecoration: 'none', fontFamily: "'Satoshi', sans-serif", fontSize: '1rem' }}>
                 <span className="email-hidden-text">+91 8086162298</span>
                 <span>Phone</span>
@@ -837,6 +918,15 @@ const Interface: FC<InterfaceProps> = ({ onOpenPanel }) => {
             </div>
           </div>
         </div>
+        {tapReveal && mailOpen && (
+          <a
+            href="mailto:rithink604@gmail.com"
+            className="mail-pop"
+            style={{ position: 'absolute', left: isMobile ? 0 : 'auto', right: isMobile ? 0 : 'clamp(1.5rem, 5vw, 5rem)', bottom: isMobile ? '8vh' : 'clamp(2.75rem, 7vh, 4.5rem)', textAlign: isMobile ? 'center' : 'right', color: '#111', fontFamily: "'Satoshi', sans-serif", fontSize: '1.05rem', fontWeight: 500, textDecoration: 'underline', textUnderlineOffset: '0.25em', padding: '0.75rem', pointerEvents: 'auto' }}
+          >
+            rithink604@gmail.com
+          </a>
+        )}
         <div ref={footerTextRef} className="footer-text-anim" style={{ position: 'absolute', bottom: '.5rem', left: isMobile || compact ? '1.5rem' : '55%', right: isMobile || compact ? '1.5rem' : '3rem', opacity: 0, transform: 'translateX(-50px)' }}>
           <div style={{ width: '100%', height: '1px', backgroundColor: '#111', opacity: 0.2, marginBottom: '0.5rem' }} />
           <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: "'Satoshi', sans-serif", fontSize: '0.75rem', color: '#111', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
