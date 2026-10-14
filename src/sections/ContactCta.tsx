@@ -11,7 +11,7 @@ export const ContactCta: FC = () => (
     <Reveal>
       <div className="rounded-md border border-white/20 bg-gradient-to-br from-white/[0.06] to-transparent px-6 py-14 text-center md:px-16 md:py-24">
         <p className="mb-4 text-xs uppercase tracking-[0.25em] text-cyan-300/80">Have a project in mind?</p>
-        <h2 id="contact-heading" className="font-['Staatliches'] text-6xl leading-none md:text-9xl">
+        <h2 id="contact-heading" className="font-['Staatliches'] text-[clamp(2.75rem,12vw,8rem)] leading-none">
           LET'S WORK{' '}
           <span className="font-['Stint_Ultra_Condensed'] font-normal">TOGETHER</span>
         </h2>
