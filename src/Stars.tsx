@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, type CSSProperties } from "react";
 import { motion, useMotionValue, useTransform, AnimatePresence } from "framer-motion";
+import { useIsTouch } from "./useIsTouch";
 
 interface Star {
   id: number;
@@ -28,9 +29,12 @@ const Stars = ({ color }: { color: 'white' | 'black' }) => {
   const [staticStars, setStaticStars] = useState<Star[]>([]);
   const [clickStars, setClickStars] = useState<Star[]>([]);
   const [showScrollToExplore, _setShowScrollToExplore] = useState(true);
+  // The "scroll to explore" label follows the mouse, so it only makes sense with a mouse.
+  const isTouch = useIsTouch();
   const starId = useRef(0);
   const lastMoveTime = useRef(0);
-  const throttleInterval = 20; // ms
+  const throttleInterval = 35; // ms (was 20; fewer React updates, trail looks the same)
+  const maxTrailStars = 40; // safety cap so the list can never grow without bound
 
   const mouseX = useMotionValue(
     typeof window !== "undefined" ? window.innerWidth / 2 : 0
@@ -44,19 +48,24 @@ const Stars = ({ color }: { color: 'white' | 'black' }) => {
       mouseX.set(e.clientX);
       mouseY.set(e.clientY);
 
+      // A finger drag is a scroll, not a mouse trail; skipping it saves work on phones.
+      if (e.pointerType === "touch") return;
+
       const now = performance.now();
       if (now - lastMoveTime.current < throttleInterval) return;
       lastMoveTime.current = now;
 
-      setTrailStars((prevStars) => [
-        ...prevStars,
-        {
-          id: starId.current++,
-          x: e.clientX,
-          y: e.clientY,
-          size: Math.random() * 10 + 2,
-        },
-      ]);
+      setTrailStars((prevStars) =>
+        [
+          ...prevStars,
+          {
+            id: starId.current++,
+            x: e.clientX,
+            y: e.clientY,
+            size: Math.random() * 10 + 2,
+          },
+        ].slice(-maxTrailStars)
+      );
     };
 
     const handlePointerDown = (e: PointerEvent) => {
@@ -182,7 +191,7 @@ const Stars = ({ color }: { color: 'white' | 'black' }) => {
       {/* Scroll to explore text */}
       <div className="fixed inset-0 pointer-events-none">
         <AnimatePresence>
-          {showScrollToExplore && color === "white" && (
+          {showScrollToExplore && color === "white" && !isTouch && (
             <motion.div
               style={{ ...textStyle, x: mouseX, y: mouseY }}
               initial={{ opacity: 0, scale: 0.8 }}

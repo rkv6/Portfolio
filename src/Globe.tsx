@@ -1,8 +1,12 @@
+import { createPortal } from 'react-dom';
+import { INSTAGRAM_URL } from './sections/data';
 import React, { useRef, type FC, useEffect, useMemo, useState } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Points, PointMaterial, ScrollControls, useScroll, Scroll, Line } from '@react-three/drei';
 import * as THREE from 'three';
 import * as random from 'maath/random/dist/maath-random.esm';
+import { AnimatePresence } from 'framer-motion';
+import WorkPanel from './sections/WorkPanel';
 // It's good practice to import icons if you use them, for example from a library like 'react-icons'
 // import { FaHeadphones, FaBars, FaPlay, FaForward, FaUpload, FaCog } from 'react-icons/fa';
 
@@ -26,8 +30,10 @@ const Globe = () => {
   const cBlack = useMemo(() => new THREE.Color('#1a1a1a'), []);
   const cWireframe = useMemo(() => new THREE.Color('#888888'), []);
 
-  // Generate random points on a sphere for the data points effect
-  const sphere = random.inSphere(new Float32Array(5000), { radius: 1.01 });
+  // Generate random points on a sphere for the data points effect.
+  // The array length must be a multiple of 3 (x, y, z per point); 5000 left a partial point that
+  // became NaN and triggered a Three.js "Computed radius is NaN" error. Memoised so it is only built once.
+  const sphere = useMemo(() => random.inSphere(new Float32Array(5001), { radius: 1.01 }), []);
 
   useFrame((state, delta) => {
     // Animate the size of the points to make them pulse
@@ -307,13 +313,20 @@ const OrbitPath = () => {
   );
 };
 
-const Interface = () => {
+interface InterfaceProps {
+  /** Opens the Work / Services / Process / Contact panel, optionally scrolled to a section. */
+  onOpenPanel: (section?: string) => void;
+}
+
+const Interface: FC<InterfaceProps> = ({ onOpenPanel }) => {
   const scroll = useScroll();
   const isMobile = useIsMobile();
   const leftRef = useRef<HTMLDivElement>(null);
   const headlineRef = useRef<HTMLDivElement>(null);
   const introRef = useRef<HTMLDivElement>(null);
   const footerTextRef = useRef<HTMLDivElement>(null);
+  const aboutRef = useRef<HTMLDivElement>(null);
+  const navRef = useRef<HTMLElement>(null);
   const scrollIndicatorRef = useRef<HTMLDivElement>(null);
 
   useFrame(() => {
@@ -355,6 +368,23 @@ const Interface = () => {
 
     if (scrollIndicatorRef.current) {
       scrollIndicatorRef.current.style.opacity = String(1 - scroll.range(0, 0.05));
+    }
+
+    // Navbar: appears once the visitor reaches the About section. The difference blend mode keeps it
+    // readable on both the dark and the light footer.
+    if (navRef.current) {
+      const visible = scroll.offset > 0.3;
+      navRef.current.style.opacity = visible ? '1' : '0';
+      navRef.current.style.transform = visible ? 'translateY(0)' : 'translateY(-16px)';
+      navRef.current.style.pointerEvents = visible ? 'auto' : 'none';
+    }
+
+    // On desktop the About block and the footer share some scroll distance, so fade About out
+    // before the footer takes over. This stops About text showing through the footer headline.
+    if (aboutRef.current && !isMobile) {
+      const fade = 1 - scroll.range(0.62, 0.12);
+      aboutRef.current.style.opacity = String(fade);
+      aboutRef.current.style.visibility = fade < 0.02 ? 'hidden' : 'visible';
     }
   });
 
@@ -406,28 +436,29 @@ const Interface = () => {
     borderRadius: '4px',
   };
 
-  const aboutHeadingStyle: React.CSSProperties = {
+  // Heading and text share one wrapper so they line up: side by side on desktop (heading left,
+  // text right, both starting at the same height), stacked on phones.
+  const aboutStyle: React.CSSProperties = {
     position: 'absolute',
-    top: isMobile ? '200vh' : '100vh',
-    left: isMobile ? '1.5rem' : '5rem',
-    pointerEvents: 'auto',
-    color: 'white',
-  };
-
-  const aboutContentStyle: React.CSSProperties = {
-    position: 'absolute',
-    top: isMobile ? '215vh' : '100vh',
-    right: isMobile ? 'auto' : '5rem',
-    left: isMobile ? '1.5rem' : 'auto',
-    maxWidth: isMobile ? 'calc(100% - 3rem)' : '45vw',
-    height: '100vh',
+    top: isMobile ? '200vh' : '118vh',
+    left: 0,
+    width: '100%',
+    boxSizing: 'border-box',
+    padding: isMobile ? '0 1.5rem' : '0 5rem',
     display: 'flex',
-    flexDirection: 'column',
-    justifyContent: isMobile ? 'flex-start' : 'center',
-    pointerEvents: 'auto',
-    textAlign: 'left',
+    flexDirection: isMobile ? 'column' : 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: isMobile ? '1.5rem' : '4rem',
+    pointerEvents: 'none',
     color: 'white',
     fontFamily: "'Satoshi', sans-serif",
+  };
+
+  const aboutTextStyle: React.CSSProperties = {
+    width: isMobile ? '100%' : 'min(45vw, 640px)',
+    textAlign: 'left',
+    pointerEvents: 'auto',
   };
 
   const footerContainerStyle: React.CSSProperties = {
@@ -444,13 +475,65 @@ const Interface = () => {
     pointerEvents: 'auto',
   };
 
+  const goTo = (target: 'about' | 'end') => {
+    const el = scroll.el;
+    if (!el) return;
+    const vh = window.innerHeight;
+    const top = target === 'end' ? el.scrollHeight : (isMobile ? 1.95 : 0.98) * vh;
+    el.scrollTo({ top, behavior: 'smooth' });
+  };
+
+  const navButton: React.CSSProperties = {
+    background: 'none',
+    border: 'none',
+    color: '#fff',
+    cursor: 'pointer',
+    font: "500 0.8rem 'Satoshi', sans-serif",
+    letterSpacing: '0.12em',
+    textTransform: 'uppercase',
+    padding: '0.4rem 0.25rem',
+  };
+
+  const navbar = createPortal(
+    <nav
+      ref={navRef}
+      className="site-nav"
+      aria-label="Site sections"
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        zIndex: 50,
+        display: 'flex',
+        justifyContent: isMobile ? 'center' : 'flex-end',
+        gap: isMobile ? '0.9rem' : '2.25rem',
+        padding: isMobile ? '0.9rem 1rem' : '1.5rem 5rem',
+        mixBlendMode: 'difference',
+        opacity: 0,
+        transform: 'translateY(-16px)',
+        pointerEvents: 'none',
+        transition: 'opacity 0.4s ease, transform 0.4s ease',
+      }}
+    >
+      <button style={navButton} onClick={() => goTo('about')}>About</button>
+      <button style={navButton} onClick={() => onOpenPanel('work')}>Work</button>
+      <button style={navButton} onClick={() => onOpenPanel('services')}>Services</button>
+      <button style={navButton} onClick={() => onOpenPanel('process')}>Process</button>
+      <button style={navButton} onClick={() => goTo('end')}>Contact</button>
+    </nav>,
+    document.body,
+  );
+
   return (
     <Scroll html style={{ width: '100%', height: '100%', pointerEvents: 'none' }}>
+      {navbar}
       <style>
         {`
-          @import url('https://fonts.googleapis.com/css2?family=Staatliches&family=Stint+Ultra+Condensed&display=swap');
-          @import url('https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700,900&display=swap');
-
+          .site-nav button { opacity: 0.75; transition: opacity 0.2s ease; }
+          .site-nav button:hover, .site-nav button:focus-visible { opacity: 1; }
+          .site-nav button:focus-visible { outline: 1px solid currentColor; outline-offset: 4px; }
+          /* Fonts (Staatliches, Stint Ultra Condensed, Satoshi) are loaded from index.html */
           .slot-machine-char {
             display: inline-block;
             position: relative;
@@ -590,7 +673,7 @@ const Interface = () => {
             style={{ ...buttonStyle, background: 'white', color: 'black', fontSize: '1.2rem', fontFamily: "'Satoshi', sans-serif" ,fontWeight: '600'}}
             className="slot-machine-container"
           >
-            {'Hire me →'.split('').map((char, i) => (
+            {'Hire me →'.replace(/ /g, ' ').split('').map((char, i) => (
               <span
                 key={i}
                 className="slot-machine-char"
@@ -602,10 +685,29 @@ const Interface = () => {
             ))}
           </button>
           <button
+            type="button"
+            onClick={() => onOpenPanel('work')}
             style={{ ...buttonStyle, fontSize: '1.2rem', fontFamily: "'Satoshi', sans-serif" }}
             className="slot-machine-container"
           >
-            {"Let's Collaborate".split('').map((char, i) => (
+            {'View work'.replace(/ /g, ' ').split('').map((char, i) => (
+              <span
+                key={i}
+                className="slot-machine-char"
+                data-text={char}
+                style={{ '--delay': `${i * 0.05}s` } as React.CSSProperties}
+              >
+                <span>{char}</span>
+              </span>
+            ))}
+          </button>
+          <button
+            type="button"
+            onClick={() => onOpenPanel('contact')}
+            style={{ ...buttonStyle, fontSize: '1.2rem', fontFamily: "'Satoshi', sans-serif" }}
+            className="slot-machine-container"
+          >
+            {"Let's Collaborate".replace(/ /g, ' ').split('').map((char, i) => (
               <span
                 key={i}
                 className="slot-machine-char"
@@ -618,25 +720,25 @@ const Interface = () => {
           </button>
         </div>
       </div>
-      <div id='about' style={aboutHeadingStyle} className="interactive">
-        <h2 style={{ fontSize: isMobile ? '3.5rem' : '5.7rem', marginBottom: '1.1rem', fontFamily: "'Staatliches', sans-serif", lineHeight: '1' }}>
+      <div id='about' ref={aboutRef} style={aboutStyle} className="interactive">
+        <h2 style={{ fontSize: isMobile ? '3.5rem' : '5.7rem', margin: 0, fontFamily: "'Staatliches', sans-serif", lineHeight: '0.9', pointerEvents: 'auto' }}>
           <span>ABOUT</span>{' '}
           <span style={{ fontFamily: "'Stint Ultra Condensed', serif", fontWeight: 400 }}>ME</span>
         </h2>
-      </div>
-      <div style={aboutContentStyle} className="interactive">
-        <p style={{ fontSize: '1.1rem', lineHeight: '1.6', marginBottom: '1.5rem', color: '#dddddd' }}>
+        <div style={aboutTextStyle}>
+        <p style={{ fontSize: '1.1rem', lineHeight: '1.6', margin: '0 0 1.5rem', color: '#dddddd' }}>
           Hello, I'm Rithin K Varghese, the developer and founder of rk-studio. I established rk-studio because I believe your website should be an engine for growth, not a bottleneck. When you partner with me, you work directly with the engineer—bypassing agency complexity for focused, dedicated expertise.
         </p>
-        <p style={{ fontSize: '1.1rem', lineHeight: '1.6', marginBottom: '1.5rem', color: '#dddddd' }}>
+        <p style={{ fontSize: '1.1rem', lineHeight: '1.6', margin: '0 0 1.5rem', color: '#dddddd' }}>
           My foundation is rooted in logic: as a final-year Electronics and Computer Science student at St. Joseph, I translate complex business requirements into efficient, secure, and scalable web architecture. My work centers on High-Performance Architecture, scalability, and commerce. I specialize in building solutions that are not just visually stunning, but functionally superior, focusing on blazing-fast load times, Custom APIs to handle unique business logic, and resilient E-commerce Solutions designed for conversion.
         </p>
-        <p style={{ fontSize: '1.1rem', lineHeight: '1.6', marginBottom: '1.5rem', color: '#dddddd' }}>
+        <p style={{ fontSize: '1.1rem', lineHeight: '1.6', margin: 0, color: '#dddddd' }}>
           Driven by a commitment to craftsmanship, I bring a unique attention to detail and aesthetic sensibility to every project.
         </p>
+        </div>
       </div>
       <div id="contact" style={footerContainerStyle} className="interactive">
-        <h2 style={{ fontSize: isMobile ? '18vw' : '13vw', fontFamily: "'Staatliches', sans-serif", color: '#111', lineHeight: '2', margin: isMobile ? '0 0 2rem 0' : '0 0 5.5rem 0' }}>
+        <h2 style={{ fontSize: isMobile ? '18vw' : '13vw', fontFamily: "'Staatliches', sans-serif", color: '#111', lineHeight: isMobile ? '2' : '1.1', margin: isMobile ? '0 0 2rem 0' : '0 0 8rem 0' }}>
           LET'S WORK{' '}
           <span style={{ fontFamily: "'Stint Ultra Condensed', serif", fontWeight: 200 }}>
             TOGETHER
@@ -661,13 +763,15 @@ const Interface = () => {
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: isMobile ? 'center' : 'flex-end', gap: '0.5rem' }}>
             <h3 style={{ fontFamily: "'Satoshi', sans-serif", fontSize: '2.5rem', color: '#111', margin: 0, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Socials</h3>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: isMobile ? 'center' : 'flex-end', gap: '0.5rem' }}>
-              <a href="#" className="slot-machine-container" style={{ color: '#111', textDecoration: 'none', fontFamily: "'Satoshi', sans-serif", fontSize: '1rem' }}>
+              {INSTAGRAM_URL && (
+              <a href={INSTAGRAM_URL} target="_blank" rel="noopener noreferrer" className="slot-machine-container" style={{ color: '#111', textDecoration: 'none', fontFamily: "'Satoshi', sans-serif", fontSize: '1rem' }}>
                 {'Instagram'.split('').map((char, i) => (
                   <span key={i} className="slot-machine-char" data-text={char} style={{ '--delay': `${i * 0.03}s` } as React.CSSProperties}>
                     <span>{char}</span>
                   </span>
                 ))}
               </a>
+              )}
               <a href="https://www.linkedin.com/in/rithin-k-varghese/" className="slot-machine-container" style={{ color: '#111', textDecoration: 'none', fontFamily: "'Satoshi', sans-serif", fontSize: '1rem' }}>
                 {'LinkedIn'.split('').map((char, i) => (
                   <span key={i} className="slot-machine-char" data-text={char} style={{ '--delay': `${i * 0.03}s` } as React.CSSProperties}>
@@ -705,6 +809,7 @@ interface GlobeCanvasProps {
 const GlobeCanvas: FC<GlobeCanvasProps> = ({ isZoomed: _isZoomed }) => {
   const globeRef = useRef<THREE.Group>(null!);
   const isMobile = useIsMobile();
+  const [panel, setPanel] = useState<{ open: boolean; section?: string }>({ open: false });
 
   // The main container now serves as the background for the Globe and the UI.
   const containerStyle: React.CSSProperties = {
@@ -734,9 +839,18 @@ const GlobeCanvas: FC<GlobeCanvasProps> = ({ isZoomed: _isZoomed }) => {
               <ShootingStar key={i} />
             ))}
           </group>
-          <Interface />
+          <Interface onOpenPanel={(section) => setPanel({ open: true, section })} />
         </ScrollControls>
       </Canvas>
+      <AnimatePresence>
+        {panel.open && (
+          <WorkPanel
+            key="work-panel"
+            initialSection={panel.section}
+            onClose={() => setPanel({ open: false })}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 };

@@ -4,9 +4,11 @@ import { motion, AnimatePresence,type Variants } from 'framer-motion';
 import Stars from './Stars';
 import SlotMachineText from './SlotMachineText';
 import GlobeCanvas from './Globe';
+import { useIsTouch } from './useIsTouch';
 
 const CursorFollower = () => {
   const ref = useRef<HTMLDivElement>(null);
+  const isTouch = useIsTouch();
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -17,6 +19,9 @@ const CursorFollower = () => {
     window.addEventListener('mousemove', handleMouseMove);
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
+
+  // No cursor on touch screens; the tap hint at the bottom of the screen replaces it.
+  if (isTouch) return null;
 
   return (
     <div
@@ -49,6 +54,39 @@ const App: FC = () => {
   const [isStudioVisible, setIsStudioVisible] = useState(false);
   const [isStudioMovedToTop, setIsStudioMovedToTop] = useState(false);
   const [isGlobeZoomed, setIsGlobeZoomed] = useState(false);
+  const isTouch = useIsTouch();
+  const touchStartY = useRef<number | null>(null);
+
+  // Intro steps can be advanced by wheel (original), tap/click, swipe up, keyboard, or the Enter button.
+  const enterStudio = () => setIsStudioVisible(true);
+
+  const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    touchStartY.current = e.touches[0]?.clientY ?? null;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent<HTMLDivElement>) => {
+    const startY = touchStartY.current;
+    const endY = e.changedTouches[0]?.clientY;
+    touchStartY.current = null;
+    if (startY !== null && endY !== undefined && startY - endY > 40) {
+      enterStudio(); // swipe up
+    }
+  };
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.repeat || !['Enter', ' ', 'ArrowDown', 'PageDown'].includes(e.key)) return;
+      if (!isWebDevVisible) {
+        e.preventDefault();
+        setIsWebDevVisible(true);
+      } else if (!isStudioVisible) {
+        e.preventDefault();
+        setIsStudioVisible(true);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [isWebDevVisible, isStudioVisible]);
 
  const pageVariants = {
   initial: {
@@ -96,10 +134,9 @@ const App: FC = () => {
 
   return (
     <>
-      {/* Import fonts from Google Fonts */}
+      {/* Fonts (Inter, Playfair Display) are loaded from index.html */}
       <style>
         {`
-          @import url('https://fonts.googleapis.com/css2?family=Inter:wght@200;900&family=Playfair+Display:ital,wght@1,700&display=swap');
           html, body {
             overflow: hidden;
           }
@@ -111,6 +148,9 @@ const App: FC = () => {
             <motion.div
               key="marquee"
               onClick={() => setIsWebDevVisible(true)}
+              role="button"
+              tabIndex={0}
+              aria-label="Enter portfolio"
               className="absolute inset-0 w-screen h-screen flex items-center bg-white cursor-pointer"
               variants={pageVariants}
               initial="initial"
@@ -118,6 +158,11 @@ const App: FC = () => {
               exit="exit"
             >
               <CursorFollower />
+              {isTouch && (
+                <p className="absolute bottom-10 left-0 right-0 text-center text-xs uppercase tracking-[0.25em] text-black/70 font-['Inter'] font-medium pointer-events-none">
+                  Tap to enter
+                </p>
+              )}
               <Stars color="black" />
               <div className="w-full whitespace-nowrap overflow-hidden">
                 <motion.h1
@@ -143,6 +188,9 @@ const App: FC = () => {
               animate="animate"
               exit="exit"
               onWheel={handleWheel}
+              onClick={() => { if (!isStudioVisible) enterStudio(); }}
+              onTouchStart={handleTouchStart}
+              onTouchEnd={handleTouchEnd}
               layout
             >
               <Stars color="white" />
@@ -151,7 +199,7 @@ const App: FC = () => {
                   <motion.h1
                     key="webdev-text"
                     exit={{ opacity: 0, y: -20 }}
-                    className="flex items-baseline text-9xl"
+                    className="flex items-baseline whitespace-nowrap text-[11vw] lg:text-9xl"
                   >
                     <span className="font-extralight">WEB</span>
                     <span className="font-['Playfair_Display'] italic font-bold ml-4">-developer</span>
@@ -159,7 +207,7 @@ const App: FC = () => {
                 ) : (
                   <motion.h1
                     key="rk-studio-text"
-                    className={`flex items-baseline ${isStudioMovedToTop ? "text-2xl" : "text-9xl"}`}
+                    className={`flex items-baseline ${isStudioMovedToTop ? "text-2xl" : "text-[16vw] lg:text-9xl"}`}
                     layout
                     transition={{ duration: 1, ease: "easeOut" }}
                   >
@@ -168,6 +216,20 @@ const App: FC = () => {
                   </motion.h1>
                 )}
               </AnimatePresence>
+              {!isStudioVisible && (
+                <div className="absolute bottom-10 left-0 right-0 z-10 flex flex-col items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); enterStudio(); }}
+                    className="rounded border border-white/70 px-8 py-3 text-sm uppercase tracking-[0.2em] transition-colors hover:bg-white hover:text-black focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300"
+                  >
+                    Enter ↓
+                  </button>
+                  <p className="text-[0.7rem] uppercase tracking-[0.2em] text-white/50 pointer-events-none">
+                    {isTouch ? 'Tap anywhere or swipe up' : 'Scroll, click or press Enter'}
+                  </p>
+                </div>
+              )}
               {isStudioMovedToTop && (
                 <motion.div
                   className="absolute inset-0"
