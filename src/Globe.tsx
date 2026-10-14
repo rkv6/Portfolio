@@ -535,8 +535,8 @@ const Interface: FC<InterfaceProps> = ({ onOpenPanel }) => {
     height: '100vh',
     display: 'flex',
     flexDirection: 'column',
-    justifyContent: topCta ? 'flex-start' : 'center',
-    paddingTop: isMobile ? '14vh' : topCta ? 'clamp(5rem, 9vh, 8rem)' : undefined,
+    justifyContent: short ? 'center' : 'flex-start',
+    paddingTop: isMobile ? '14vh' : topCta ? 'clamp(5rem, 9vh, 8rem)' : !short ? 'clamp(4.5rem, 12vh, 10rem)' : undefined,
     paddingBottom: isMobile ? '18vh' : undefined,
     boxSizing: 'border-box',
     alignItems: 'center',
@@ -578,10 +578,7 @@ const Interface: FC<InterfaceProps> = ({ onOpenPanel }) => {
         justifyContent: isMobile ? 'space-between' : 'flex-end',
         gap: isMobile ? '0.25rem' : '2.25rem',
         padding: isMobile ? 'max(0.35rem, env(safe-area-inset-top)) max(0.75rem, env(safe-area-inset-right)) 0.35rem max(0.75rem, env(safe-area-inset-left))' : compact ? '1.25rem clamp(1.5rem, 5vw, 5rem)' : '1.5rem 5rem',
-        mixBlendMode: isMobile ? 'normal' : 'difference',
-        background: isMobile ? 'rgba(8, 8, 8, 0.86)' : 'transparent',
-        backdropFilter: isMobile ? 'blur(10px)' : undefined,
-        borderBottom: isMobile ? '1px solid rgba(255,255,255,0.08)' : undefined,
+        mixBlendMode: 'difference',
         opacity: 0,
         transform: 'translateY(-16px)',
         pointerEvents: 'none',
@@ -608,15 +605,14 @@ const Interface: FC<InterfaceProps> = ({ onOpenPanel }) => {
           .rise { animation: rise 0.6s var(--ease-out) both; }
           @keyframes hire-pop { from { opacity: 0; scale: 0.94; } to { opacity: 1; scale: 1; } }
           .hire-pop { animation: hire-pop 0.4s var(--ease-out) 0.2s both; transition: transform 0.16s var(--ease-out); }
-          @keyframes mail-pop { from { opacity: 0; translate: 0 8px; } to { opacity: 1; translate: 0 0; } }
-          .mail-pop { animation: mail-pop 0.2s var(--ease-out) both; }
           /* Press feedback on touch screens. */
           .slot-machine-container, .site-nav button { transition: transform 0.16s var(--ease-out); }
           @media (hover: none) {
             .slot-machine-container:active, .hire-pop:active, .site-nav button:active { transform: scale(0.97); }
           }
           @media (prefers-reduced-motion: reduce) {
-            .rise, .hire-pop, .mail-pop { animation: none; }
+            .rise, .hire-pop { animation: none; }
+            .email-hidden-text { transition: none; }
             .slot-machine-container, .site-nav button, .hire-pop { transition: none; }
           }
           .site-nav button { opacity: 0.75; transition: opacity 0.2s ease; }
@@ -674,7 +670,16 @@ const Interface: FC<InterfaceProps> = ({ onOpenPanel }) => {
             transform: translateX(-20px);
             white-space: nowrap;
           }
-          .email-reveal-container:hover .email-hidden-text {
+          /* Hover only where a real pointer exists, so a tap on a phone does not leave it stuck open. */
+          @media (hover: hover) {
+            .email-reveal-container:hover .email-hidden-text {
+              max-width: 200px;
+              opacity: 1;
+              transform: translateX(0);
+              margin-right: 0.5rem;
+            }
+          }
+          .email-reveal-container.open .email-hidden-text {
             max-width: 200px;
             opacity: 1;
             transform: translateX(0);
@@ -863,24 +868,37 @@ const Interface: FC<InterfaceProps> = ({ onOpenPanel }) => {
           </span>
         </h2>
         
-        <div ref={footerColsRef} style={{ position: isMobile ? 'relative' : 'absolute', bottom: isMobile ? 'auto' : tapReveal ? 'clamp(5.5rem, 12vh, 8rem)' : 'clamp(2.5rem, 7vh, 5rem)', right: isMobile ? 'auto' : 'clamp(1.5rem, 5vw, 5rem)', display: 'flex', flexDirection: 'row', alignItems: 'flex-start', gap: isMobile ? '1.25rem' : 'clamp(2rem, 10vw, 15rem)', justifyContent: isMobile ? 'center' : 'flex-end', width: isMobile ? '100%' : 'auto', marginTop: isMobile ? 'auto' : '0' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: isMobile ? 'center' : 'flex-end', gap: '0.5rem' }}>
+        <div ref={footerColsRef} style={{ position: isMobile ? 'relative' : 'absolute', bottom: isMobile ? 'auto' : short ? 'clamp(2.5rem, 7vh, 5rem)' : 'clamp(5rem, 24vh, 14rem)', right: isMobile ? 'auto' : 'clamp(1.5rem, 5vw, 5rem)', display: 'flex', flexDirection: 'row', alignItems: 'flex-start', gap: isMobile ? '1.25rem' : 'clamp(2rem, 10vw, 15rem)', justifyContent: 'flex-end', width: isMobile ? '100%' : 'auto', boxSizing: 'border-box', paddingRight: isMobile ? '1.5rem' : 0, marginTop: isMobile ? 'auto' : '0' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.5rem' }}>
             <h3 style={{ fontFamily: "'Satoshi', sans-serif", fontSize: isMobile || compact ? 'clamp(1.4rem, 6vw, 2.5rem)' : '2.5rem', color: '#111', margin: 0, textTransform: 'uppercase', letterSpacing: isMobile ? '0.06em' : '0.1em' }}>Contact</h3>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: isMobile ? 'center' : 'flex-end', gap: '0.5rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.5rem' }}>
               {tapReveal ? (
-                <button
-                  type="button"
-                  aria-expanded={mailOpen}
-                  onClick={() => setMailOpen((o) => !o)}
-                  style={{ background: 'none', border: 'none', padding: '0.5rem 0.75rem', minHeight: '44px', cursor: 'pointer', color: '#111', fontFamily: "'Satoshi', sans-serif", fontSize: '1rem' }}
-                >
-                  Mail
-                </button>
+                // Touch screens: tap "Mail" to slide the address out to its left, same as the hover on a computer.
+                // Only the revealed address opens the mail app.
+                <span className={`email-reveal-container${mailOpen ? ' open' : ''}`} style={{ color: '#111', fontFamily: "'Satoshi', sans-serif", fontSize: 'clamp(0.85rem, 3.6vw, 1rem)' }}>
+                  <a
+                    href="mailto:rithink604@gmail.com"
+                    className="email-hidden-text"
+                    tabIndex={mailOpen ? 0 : -1}
+                    aria-hidden={!mailOpen}
+                    style={{ color: '#111', textDecoration: 'underline', textUnderlineOffset: '0.2em', padding: '0.75rem 0', pointerEvents: mailOpen ? 'auto' : 'none' }}
+                  >
+                    rithink604@gmail.com
+                  </a>
+                  <button
+                    type="button"
+                    aria-expanded={mailOpen}
+                    onClick={() => setMailOpen((o) => !o)}
+                    style={{ background: 'none', border: 'none', padding: '0.75rem 0', minHeight: '44px', cursor: 'pointer', color: 'inherit', font: 'inherit' }}
+                  >
+                    Mail
+                  </button>
+                </span>
               ) : (
-                            <a href="mailto:rithink604@gmail.com" className="email-reveal-container" style={{ color: '#111', textDecoration: 'none', fontFamily: "'Satoshi', sans-serif", fontSize: '1rem' }}>
-                <span className="email-hidden-text">rithink604@gmail.com</span>
-                <span>Mail</span>
-              </a>
+                <a href="mailto:rithink604@gmail.com" className="email-reveal-container" style={{ color: '#111', textDecoration: 'none', fontFamily: "'Satoshi', sans-serif", fontSize: '1rem' }}>
+                  <span className="email-hidden-text">rithink604@gmail.com</span>
+                  <span>Mail</span>
+                </a>
               )}
               <a href="tel:+918086162298" className="email-reveal-container" style={{ color: '#111', textDecoration: 'none', fontFamily: "'Satoshi', sans-serif", fontSize: '1rem' }}>
                 <span className="email-hidden-text">+91 8086162298</span>
@@ -889,9 +907,9 @@ const Interface: FC<InterfaceProps> = ({ onOpenPanel }) => {
             </div>
           </div>
           
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: isMobile ? 'center' : 'flex-end', gap: '0.5rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.5rem' }}>
             <h3 style={{ fontFamily: "'Satoshi', sans-serif", fontSize: isMobile || compact ? 'clamp(1.4rem, 6vw, 2.5rem)' : '2.5rem', color: '#111', margin: 0, textTransform: 'uppercase', letterSpacing: isMobile ? '0.06em' : '0.1em' }}>Socials</h3>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: isMobile ? 'center' : 'flex-end', gap: '0.5rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.5rem' }}>
               {INSTAGRAM_URL && (
               <a href={INSTAGRAM_URL} target="_blank" rel="noopener noreferrer" className="slot-machine-container" style={{ color: '#111', textDecoration: 'none', fontFamily: "'Satoshi', sans-serif", fontSize: '1rem' }}>
                 {'Instagram'.split('').map((char, i) => (
@@ -918,15 +936,6 @@ const Interface: FC<InterfaceProps> = ({ onOpenPanel }) => {
             </div>
           </div>
         </div>
-        {tapReveal && mailOpen && (
-          <a
-            href="mailto:rithink604@gmail.com"
-            className="mail-pop"
-            style={{ position: 'absolute', left: isMobile ? 0 : 'auto', right: isMobile ? 0 : 'clamp(1.5rem, 5vw, 5rem)', bottom: isMobile ? '8vh' : 'clamp(2.75rem, 7vh, 4.5rem)', textAlign: isMobile ? 'center' : 'right', color: '#111', fontFamily: "'Satoshi', sans-serif", fontSize: '1.05rem', fontWeight: 500, textDecoration: 'underline', textUnderlineOffset: '0.25em', padding: '0.75rem', pointerEvents: 'auto' }}
-          >
-            rithink604@gmail.com
-          </a>
-        )}
         <div ref={footerTextRef} className="footer-text-anim" style={{ position: 'absolute', bottom: '.5rem', left: isMobile || compact ? '1.5rem' : '55%', right: isMobile || compact ? '1.5rem' : '3rem', opacity: 0, transform: 'translateX(-50px)' }}>
           <div style={{ width: '100%', height: '1px', backgroundColor: '#111', opacity: 0.2, marginBottom: '0.5rem' }} />
           <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: "'Satoshi', sans-serif", fontSize: '0.75rem', color: '#111', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
