@@ -471,7 +471,7 @@ const Interface: FC<InterfaceProps> = ({ onOpenPanel }) => {
   };
 
 
-  const btnFont = compact ? 'clamp(0.95rem, 2.4vh, 1.2rem)' : '1.2rem';
+  const btnFont = isMobile ? 'clamp(0.88rem, 3.8vw, 1.1rem)' : compact ? 'clamp(0.95rem, 2.4vh, 1.2rem)' : '1.2rem';
   const heroStackStyle: React.CSSProperties = compact
     ? {
         position: 'absolute',
@@ -494,7 +494,7 @@ const Interface: FC<InterfaceProps> = ({ onOpenPanel }) => {
     background: 'rgba(255, 255, 255, 0.1)',
     border: '1px solid white',
     color: 'white',
-    padding: isMobile ? '1rem 1.5rem' : compact ? '0.75rem 1.4rem' : '1rem 2.5rem',
+    padding: isMobile ? '0.8rem 1rem' : compact ? '0.75rem 1.4rem' : '1rem 2.5rem',
     minHeight: '44px',
     cursor: 'pointer',
     borderRadius: '4px',
@@ -786,7 +786,7 @@ const Interface: FC<InterfaceProps> = ({ onOpenPanel }) => {
         <h1 style={{ fontFamily: "'Staatliches', sans-serif", fontSize: compact ? 'clamp(1.5rem, min(4.5vw, 6.5vh), 2.5rem)' : '2.5rem', fontWeight: 'normal', lineHeight: '1.1', textAlign: isMobile || compact ? 'left' : 'justify', letterSpacing: '.05em' }}>
           I move people, not just <span style={{ fontFamily: "'Stint Ultra Condensed', serif", fontSize: 'inherit', fontWeight: '400' }}>screens.</span>
         </h1>
-        <div style={{ display: 'flex', flexDirection: 'row', gap: '1rem', marginTop: '1.25rem', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', flexDirection: 'row', gap: isMobile ? '0.6rem' : '1rem', marginTop: '1.25rem', flexWrap: isMobile ? 'nowrap' : 'wrap' }}>
           {!topCta && (
           <button
             onClick={() => window.location.href = 'mailto:rithink604@gmail.com'}
