@@ -21,6 +21,20 @@ const useIsMobile = () => {
   return isMobile;
 };
 
+const useViewport = () => {
+  const [vp, setVp] = useState({ w: typeof window === 'undefined' ? 1280 : window.innerWidth, h: typeof window === 'undefined' ? 800 : window.innerHeight });
+  useEffect(() => {
+    const onResize = () => setVp({ w: window.innerWidth, h: window.innerHeight });
+    window.addEventListener('resize', onResize);
+    window.addEventListener('orientationchange', onResize);
+    return () => {
+      window.removeEventListener('resize', onResize);
+      window.removeEventListener('orientationchange', onResize);
+    };
+  }, []);
+  return vp;
+};
+
 const Globe = () => {
   const waterRef = useRef<THREE.Mesh>(null!);
   const pointsRef = useRef<THREE.Points>(null!);
@@ -320,7 +334,12 @@ interface InterfaceProps {
 
 const Interface: FC<InterfaceProps> = ({ onOpenPanel }) => {
   const scroll = useScroll();
+  const vp = useViewport();
   const isMobile = useIsMobile();
+  // compact = tablets and short landscape windows: wider than a phone, too tight for the wide desktop hero.
+  const compact = !isMobile && (vp.w < 1100 || vp.h < 600);
+  const short = vp.h < 600;
+  const sideBySide = vp.w >= 900 || short;
   const leftRef = useRef<HTMLDivElement>(null);
   const headlineRef = useRef<HTMLDivElement>(null);
   const introRef = useRef<HTMLDivElement>(null);
@@ -389,49 +408,69 @@ const Interface: FC<InterfaceProps> = ({ onOpenPanel }) => {
   });
 
   const textContainerStyle: React.CSSProperties = {
-    position: 'absolute',
-    bottom: isMobile ? '12vh' : '5rem',
-    left: isMobile ? '1.5rem' : '5rem',
-    maxWidth: '800px',
+    position: compact ? 'relative' : 'absolute',
+    bottom: isMobile ? '12vh' : compact ? 'auto' : '5rem',
+    left: isMobile ? '1.5rem' : compact ? 'auto' : '5rem',
+    maxWidth: compact && sideBySide ? '50vw' : '800px',
     color: 'white',
-    fontSize: isMobile ? '15vw' : '6rem', // Increased font size for the whole block
-    lineHeight: '1.1', // Adjusted line height for the new size
+    fontSize: isMobile ? '15vw' : compact ? 'clamp(2.6rem, min(9vw, 15vh), 5rem)' : 'clamp(4rem, min(7.2vw, 13vh), 6rem)',
+    lineHeight: '1.1',
     pointerEvents: 'auto',
     fontFamily: "'Satoshi', sans-serif",
   };
 
   const headlineStyle: React.CSSProperties = {
-    position: 'absolute',
-    bottom: isMobile ? 'auto' : '5rem',
+    position: compact ? 'relative' : 'absolute',
+    bottom: isMobile || compact ? 'auto' : '5rem',
     top: isMobile ? '120vh' : 'auto',
-    right: isMobile ? 'auto' : '5rem',
+    right: isMobile || compact ? 'auto' : '5rem',
     left: isMobile ? '1.5rem' : 'auto',
-    maxWidth: isMobile ? 'calc(100% - 3rem)' : '600px',
+    maxWidth: isMobile ? 'calc(100% - 3rem)' : compact ? '100%' : '600px',
     color: 'white',
-    textAlign: isMobile ? 'left' : 'right',
+    textAlign: isMobile || compact ? 'left' : 'right',
     pointerEvents: 'auto',
     fontFamily: "'Satoshi', sans-serif",
   };
 
   const introStyle: React.CSSProperties = {
-    position: 'absolute',
-    bottom: isMobile ? 'auto' : '18rem',
+    position: compact ? 'relative' : 'absolute',
+    bottom: isMobile || compact ? 'auto' : '18rem',
     top: isMobile ? '100vh' : 'auto',
-    right: isMobile ? 'auto' : '5rem',
+    right: isMobile || compact ? 'auto' : '5rem',
     left: isMobile ? '1.5rem' : 'auto',
-    maxWidth: isMobile ? 'calc(100% - 3rem)' : '450px',
+    maxWidth: isMobile ? 'calc(100% - 3rem)' : compact ? '100%' : '450px',
     color: 'white',
-    textAlign: isMobile ? 'left' : 'right',
+    textAlign: isMobile || compact ? 'left' : 'right',
     pointerEvents: 'auto',
     fontFamily: "'Staatliches', sans-serif",
   };
 
 
+  const btnFont = compact ? 'clamp(0.95rem, 2.4vh, 1.2rem)' : '1.2rem';
+  const heroStackStyle: React.CSSProperties = compact
+    ? {
+        position: 'absolute',
+        left: 'clamp(1.5rem, 5vw, 5rem)',
+        right: 'clamp(1.5rem, 5vw, 5rem)',
+        bottom: 'clamp(1.25rem, 5vh, 5rem)',
+        display: 'flex',
+        flexDirection: sideBySide ? 'row' : 'column',
+        alignItems: sideBySide ? 'flex-end' : 'flex-start',
+        justifyContent: 'space-between',
+        gap: sideBySide ? '2rem' : '1.5rem',
+        pointerEvents: 'none',
+      }
+    : { display: 'contents' };
+  const heroRightStyle: React.CSSProperties = compact
+    ? { display: 'flex', flexDirection: 'column', gap: '0.5rem', width: sideBySide ? '45vw' : '100%', maxWidth: sideBySide ? '45vw' : '36rem' }
+    : { display: 'contents' };
+
   const buttonStyle: React.CSSProperties = {
     background: 'rgba(255, 255, 255, 0.1)',
     border: '1px solid white',
     color: 'white',
-    padding: isMobile ? '1rem 1.5rem' : '1rem 2.5rem',
+    padding: isMobile ? '1rem 1.5rem' : compact ? '0.75rem 1.4rem' : '1rem 2.5rem',
+    minHeight: '44px',
     cursor: 'pointer',
     borderRadius: '4px',
   };
@@ -463,7 +502,8 @@ const Interface: FC<InterfaceProps> = ({ onOpenPanel }) => {
 
   const footerContainerStyle: React.CSSProperties = {
     position: 'absolute',
-    top: isMobile ? '320vh' : '150vh',
+    // The footer fills the last screen exactly (the scroll ends 100vh before the end of the page).
+    top: isMobile ? '400vh' : '180vh',
     lineHeight: '1.3',
     left: '0',
     width: '100%',
@@ -489,9 +529,10 @@ const Interface: FC<InterfaceProps> = ({ onOpenPanel }) => {
     color: '#fff',
     cursor: 'pointer',
     font: "500 0.8rem 'Satoshi', sans-serif",
-    letterSpacing: '0.12em',
+    letterSpacing: isMobile ? '0.08em' : '0.12em',
     textTransform: 'uppercase',
-    padding: '0.4rem 0.25rem',
+    padding: isMobile ? '0.6rem 0.4rem' : '0.4rem 0.25rem',
+    minHeight: isMobile ? '44px' : undefined,
   };
 
   const navbar = createPortal(
@@ -506,10 +547,13 @@ const Interface: FC<InterfaceProps> = ({ onOpenPanel }) => {
         right: 0,
         zIndex: 50,
         display: 'flex',
-        justifyContent: isMobile ? 'center' : 'flex-end',
-        gap: isMobile ? '0.9rem' : '2.25rem',
-        padding: isMobile ? '0.9rem 1rem' : '1.5rem 5rem',
-        mixBlendMode: 'difference',
+        justifyContent: isMobile ? 'space-between' : 'flex-end',
+        gap: isMobile ? '0.25rem' : '2.25rem',
+        padding: isMobile ? 'max(0.35rem, env(safe-area-inset-top)) max(0.75rem, env(safe-area-inset-right)) 0.35rem max(0.75rem, env(safe-area-inset-left))' : compact ? '1.25rem clamp(1.5rem, 5vw, 5rem)' : '1.5rem 5rem',
+        mixBlendMode: isMobile ? 'normal' : 'difference',
+        background: isMobile ? 'rgba(8, 8, 8, 0.86)' : 'transparent',
+        backdropFilter: isMobile ? 'blur(10px)' : undefined,
+        borderBottom: isMobile ? '1px solid rgba(255,255,255,0.08)' : undefined,
         opacity: 0,
         transform: 'translateY(-16px)',
         pointerEvents: 'none',
@@ -519,7 +563,7 @@ const Interface: FC<InterfaceProps> = ({ onOpenPanel }) => {
       <button style={navButton} onClick={() => goTo('about')}>About</button>
       <button style={navButton} onClick={() => onOpenPanel('work')}>Work</button>
       <button style={navButton} onClick={() => onOpenPanel('services')}>Services</button>
-      <button style={navButton} onClick={() => onOpenPanel('process')}>Process</button>
+      {!isMobile && <button style={navButton} onClick={() => onOpenPanel('process')}>Process</button>}
       <button style={navButton} onClick={() => goTo('end')}>Contact</button>
     </nav>,
     document.body,
@@ -608,12 +652,13 @@ const Interface: FC<InterfaceProps> = ({ onOpenPanel }) => {
       </style>
       <div style={{ position: 'absolute', top: '1rem', left: isMobile ? '1.5rem' : '3.1rem', pointerEvents: 'auto' }}>
         <div style={{ display: 'flex', flexDirection: 'column' }}>
-          <span style={{marginTop: '1rem',marginLeft: '10', fontSize: '2.5rem', fontWeight: '400', fontFamily: "'Stint Ultra Condensed', serif", color: 'white', letterSpacing: '0.02em', textTransform: 'uppercase', lineHeight: '1' }}>
+          <span style={{marginTop: '1rem',marginLeft: '10', fontSize: short ? '1.35rem' : 'clamp(1.9rem, 5vw, 2.5rem)', fontWeight: '400', fontFamily: "'Stint Ultra Condensed', serif", color: 'white', letterSpacing: '0.02em', textTransform: 'uppercase', lineHeight: '1' }}>
             Rithin K Varghese
           </span>
-          <span style={{ fontSize: '1.4rem', fontFamily: "'Satoshi', sans-serif", color: '#aaaaaa', letterSpacing: '0.05em' }}>portfolio'26</span>
+          <span style={{ fontSize: short ? '0.85rem' : '1.4rem', fontFamily: "'Satoshi', sans-serif", color: '#aaaaaa', letterSpacing: '0.05em' }}>portfolio'26</span>
         </div>
       </div>
+      <div style={heroStackStyle}>
       <div ref={leftRef} style={textContainerStyle} >
         {/* Using divs for layout and spans for specific styling */}
         <div style={{ fontFamily: "'Staatliches', sans-serif", lineHeight: '1' }}>
@@ -658,19 +703,20 @@ const Interface: FC<InterfaceProps> = ({ onOpenPanel }) => {
           <div className="scroll-arrow"></div>
         </div>
       )}
+      <div style={heroRightStyle}>
       <div ref={introRef} style={introStyle}>
-        <p style={{ fontFamily: "'Satoshi', sans-serif", fontSize: '1.15rem', color: '#cccccc', marginTop: '1rem', textAlign: isMobile ? 'left' : 'justify', marginBottom: '2rem' }}>
+        <p style={{ fontFamily: "'Satoshi', sans-serif", fontSize: short ? '0.95rem' : '1.15rem', color: '#cccccc', marginTop: compact ? 0 : '1rem', textAlign: isMobile || compact ? 'left' : 'justify', marginBottom: compact ? '0.5rem' : '2rem' }}>
           I am a developer who designs, and a designer who codes. I create websites that look simple, feel alive, and are engineered for high performance.
         </p>
       </div>
       <div ref={headlineRef} style={headlineStyle}>
-        <h1 style={{ fontFamily: "'Staatliches', sans-serif", fontSize: '2.5rem', fontWeight: 'normal', lineHeight: '1.1', textAlign: isMobile ? 'left' : 'justify', letterSpacing: '.05em' }}>
-          I move people, not just <span style={{ fontFamily: "'Stint Ultra Condensed', serif", fontSize: '2.5rem', fontWeight: '400' }}>screens.</span>
+        <h1 style={{ fontFamily: "'Staatliches', sans-serif", fontSize: compact ? 'clamp(1.5rem, min(4.5vw, 6.5vh), 2.5rem)' : '2.5rem', fontWeight: 'normal', lineHeight: '1.1', textAlign: isMobile || compact ? 'left' : 'justify', letterSpacing: '.05em' }}>
+          I move people, not just <span style={{ fontFamily: "'Stint Ultra Condensed', serif", fontSize: 'inherit', fontWeight: '400' }}>screens.</span>
         </h1>
         <div style={{ display: 'flex', flexDirection: 'row', gap: '1rem', marginTop: '1.25rem', flexWrap: 'wrap' }}>
           <button
             onClick={() => window.location.href = 'mailto:rithink604@gmail.com'}
-            style={{ ...buttonStyle, background: 'white', color: 'black', fontSize: '1.2rem', fontFamily: "'Satoshi', sans-serif" ,fontWeight: '600'}}
+            style={{ ...buttonStyle, background: 'white', color: 'black', fontSize: btnFont, fontFamily: "'Satoshi', sans-serif" ,fontWeight: '600'}}
             className="slot-machine-container"
           >
             {'Hire me →'.replace(/ /g, ' ').split('').map((char, i) => (
@@ -687,7 +733,7 @@ const Interface: FC<InterfaceProps> = ({ onOpenPanel }) => {
           <button
             type="button"
             onClick={() => onOpenPanel('work')}
-            style={{ ...buttonStyle, fontSize: '1.2rem', fontFamily: "'Satoshi', sans-serif" }}
+            style={{ ...buttonStyle, fontSize: btnFont, fontFamily: "'Satoshi', sans-serif" }}
             className="slot-machine-container"
           >
             {'View work'.replace(/ /g, ' ').split('').map((char, i) => (
@@ -704,7 +750,7 @@ const Interface: FC<InterfaceProps> = ({ onOpenPanel }) => {
           <button
             type="button"
             onClick={() => onOpenPanel('contact')}
-            style={{ ...buttonStyle, fontSize: '1.2rem', fontFamily: "'Satoshi', sans-serif" }}
+            style={{ ...buttonStyle, fontSize: btnFont, fontFamily: "'Satoshi', sans-serif" }}
             className="slot-machine-container"
           >
             {"Let's Collaborate".replace(/ /g, ' ').split('').map((char, i) => (
@@ -720,34 +766,36 @@ const Interface: FC<InterfaceProps> = ({ onOpenPanel }) => {
           </button>
         </div>
       </div>
+      </div>
+      </div>
       <div id='about' ref={aboutRef} style={aboutStyle} className="interactive">
-        <h2 style={{ fontSize: isMobile ? '3.5rem' : '5.7rem', margin: 0, fontFamily: "'Staatliches', sans-serif", lineHeight: '0.9', pointerEvents: 'auto' }}>
+        <h2 style={{ fontSize: isMobile ? '3.5rem' : 'clamp(3.2rem, 6.5vw, 5.7rem)', margin: 0, fontFamily: "'Staatliches', sans-serif", lineHeight: '0.9', pointerEvents: 'auto' }}>
           <span>ABOUT</span>{' '}
           <span style={{ fontFamily: "'Stint Ultra Condensed', serif", fontWeight: 400 }}>ME</span>
         </h2>
         <div style={aboutTextStyle}>
-        <p style={{ fontSize: '1.1rem', lineHeight: '1.6', margin: '0 0 1.5rem', color: '#dddddd' }}>
+        <p style={{ fontSize: short ? '1rem' : '1.1rem', lineHeight: '1.6', margin: '0 0 1.5rem', color: '#dddddd' }}>
           Hello, I'm Rithin K Varghese, the developer and founder of rk-studio. I established rk-studio because I believe your website should be an engine for growth, not a bottleneck. When you partner with me, you work directly with the engineer—bypassing agency complexity for focused, dedicated expertise.
         </p>
-        <p style={{ fontSize: '1.1rem', lineHeight: '1.6', margin: '0 0 1.5rem', color: '#dddddd' }}>
+        <p style={{ fontSize: short ? '1rem' : '1.1rem', lineHeight: '1.6', margin: '0 0 1.5rem', color: '#dddddd' }}>
           My foundation is rooted in logic: as a final-year Electronics and Computer Science student at St. Joseph, I translate complex business requirements into efficient, secure, and scalable web architecture. My work centers on High-Performance Architecture, scalability, and commerce. I specialize in building solutions that are not just visually stunning, but functionally superior, focusing on blazing-fast load times, Custom APIs to handle unique business logic, and resilient E-commerce Solutions designed for conversion.
         </p>
-        <p style={{ fontSize: '1.1rem', lineHeight: '1.6', margin: 0, color: '#dddddd' }}>
+        <p style={{ fontSize: short ? '1rem' : '1.1rem', lineHeight: '1.6', margin: 0, color: '#dddddd' }}>
           Driven by a commitment to craftsmanship, I bring a unique attention to detail and aesthetic sensibility to every project.
         </p>
         </div>
       </div>
       <div id="contact" style={footerContainerStyle} className="interactive">
-        <h2 style={{ fontSize: isMobile ? '18vw' : '13vw', fontFamily: "'Staatliches', sans-serif", color: '#111', lineHeight: isMobile ? '2' : '1.1', margin: isMobile ? '0 0 2rem 0' : '0 0 8rem 0' }}>
+        <h2 style={{ fontSize: isMobile ? '18vw' : short ? 'min(13vw, 18vh)' : 'min(13vw, 24vh)', fontFamily: "'Staatliches', sans-serif", color: '#111', lineHeight: isMobile ? '1.05' : '1.1', margin: isMobile ? '0 0 2rem 0' : '0 0 min(8rem, 14vh) 0' }}>
           LET'S WORK{' '}
           <span style={{ fontFamily: "'Stint Ultra Condensed', serif", fontWeight: 200 }}>
             TOGETHER
           </span>
         </h2>
         
-        <div style={{ position: isMobile ? 'relative' : 'absolute', bottom: isMobile ? 'auto' : '5rem', right: isMobile ? 'auto' : '5rem', display: 'flex', flexDirection: 'row', alignItems: 'flex-start', gap: isMobile ? '2rem' : '15rem', justifyContent: isMobile ? 'center' : 'flex-end', width: isMobile ? '100%' : 'auto', marginTop: isMobile ? '2rem' : '0' }}>
+        <div style={{ position: isMobile ? 'relative' : 'absolute', bottom: isMobile ? 'auto' : 'clamp(2.5rem, 7vh, 5rem)', right: isMobile ? 'auto' : 'clamp(1.5rem, 5vw, 5rem)', display: 'flex', flexDirection: 'row', alignItems: 'flex-start', gap: isMobile ? '1.25rem' : 'clamp(2rem, 10vw, 15rem)', justifyContent: isMobile ? 'center' : 'flex-end', width: isMobile ? '100%' : 'auto', marginTop: isMobile ? '2rem' : '0' }}>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: isMobile ? 'center' : 'flex-end', gap: '0.5rem' }}>
-            <h3 style={{ fontFamily: "'Satoshi', sans-serif", fontSize: '2.5rem', color: '#111', margin: 0, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Contact</h3>
+            <h3 style={{ fontFamily: "'Satoshi', sans-serif", fontSize: isMobile || compact ? 'clamp(1.4rem, 6vw, 2.5rem)' : '2.5rem', color: '#111', margin: 0, textTransform: 'uppercase', letterSpacing: isMobile ? '0.06em' : '0.1em' }}>Contact</h3>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: isMobile ? 'center' : 'flex-end', gap: '0.5rem' }}>
               <a href="mailto:rithink604@gmail.com" className="email-reveal-container" style={{ color: '#111', textDecoration: 'none', fontFamily: "'Satoshi', sans-serif", fontSize: '1rem' }}>
                 <span className="email-hidden-text">rithink604@gmail.com</span>
@@ -761,7 +809,7 @@ const Interface: FC<InterfaceProps> = ({ onOpenPanel }) => {
           </div>
           
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: isMobile ? 'center' : 'flex-end', gap: '0.5rem' }}>
-            <h3 style={{ fontFamily: "'Satoshi', sans-serif", fontSize: '2.5rem', color: '#111', margin: 0, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Socials</h3>
+            <h3 style={{ fontFamily: "'Satoshi', sans-serif", fontSize: isMobile || compact ? 'clamp(1.4rem, 6vw, 2.5rem)' : '2.5rem', color: '#111', margin: 0, textTransform: 'uppercase', letterSpacing: isMobile ? '0.06em' : '0.1em' }}>Socials</h3>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: isMobile ? 'center' : 'flex-end', gap: '0.5rem' }}>
               {INSTAGRAM_URL && (
               <a href={INSTAGRAM_URL} target="_blank" rel="noopener noreferrer" className="slot-machine-container" style={{ color: '#111', textDecoration: 'none', fontFamily: "'Satoshi', sans-serif", fontSize: '1rem' }}>
@@ -789,7 +837,7 @@ const Interface: FC<InterfaceProps> = ({ onOpenPanel }) => {
             </div>
           </div>
         </div>
-        <div ref={footerTextRef} className="footer-text-anim" style={{ position: 'absolute', bottom: '.5rem', left: '55%', right: '3rem', opacity: 0, transform: 'translateX(-50px)' }}>
+        <div ref={footerTextRef} className="footer-text-anim" style={{ position: 'absolute', bottom: '.5rem', left: isMobile || compact ? '1.5rem' : '55%', right: isMobile || compact ? '1.5rem' : '3rem', opacity: 0, transform: 'translateX(-50px)' }}>
           <div style={{ width: '100%', height: '1px', backgroundColor: '#111', opacity: 0.2, marginBottom: '0.5rem' }} />
           <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: "'Satoshi', sans-serif", fontSize: '0.75rem', color: '#111', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
             <span>&copy; {new Date().getFullYear()} rk-studio</span>

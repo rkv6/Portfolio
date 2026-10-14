@@ -34,7 +34,7 @@ interface HeadingProps {
 export const SectionHeading: FC<HeadingProps> = ({ kicker, first, second, id }) => (
   <div className="mb-10 md:mb-14">
     <p className="font-['Satoshi'] text-xs uppercase tracking-[0.25em] text-cyan-300/80 mb-3">{kicker}</p>
-    <h2 id={id} className="font-['Staatliches'] text-6xl md:text-8xl leading-none">
+    <h2 id={id} className="font-['Staatliches'] text-[clamp(2.75rem,11vw,6rem)] leading-none">
       <span>{first}</span>{' '}
       <span className="font-['Stint_Ultra_Condensed'] font-normal">{second}</span>
     </h2>
