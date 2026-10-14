@@ -1,6 +1,6 @@
 // --- MAIN APP COMPONENT --
 import React, { type FC, useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence,type Variants } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import Stars from './Stars';
 import SlotMachineText from './SlotMachineText';
 import GlobeCanvas from './Globe';
@@ -32,18 +32,6 @@ const CursorFollower = () => {
       ( CLICK TO EXPLORE )
     </div>
   );
-};
-
-const marqueeVariants: Variants = {
-  scroll: {
-    x: ["-25%", "0%"], // Moves Left to Right
-    transition: {
-      repeat: Infinity,
-      repeatType: "loop",
-      duration: 20, // Lower this number to make it faster
-      ease: "linear",
-    },
-  },
 };
 
 const App: FC = () => {
@@ -140,6 +128,19 @@ const App: FC = () => {
           html, body {
             overflow: hidden;
           }
+          /* Runs on the compositor, so it keeps looping smoothly. The text is repeated 4 times,
+             so sliding exactly one copy (25%) leftwards loops with no visible jump. */
+          @keyframes marquee-left {
+            from { transform: translateX(0); }
+            to { transform: translateX(-25%); }
+          }
+          .marquee-track {
+            animation: marquee-left 20s linear infinite; /* lower the 20s to make it faster */
+            will-change: transform;
+          }
+          @media (prefers-reduced-motion: reduce) {
+            .marquee-track { animation-duration: 90s; }
+          }
         `}
       </style>
       <div className="relative h-screen">
@@ -165,14 +166,9 @@ const App: FC = () => {
               )}
               <Stars color="black" />
               <div className="w-full whitespace-nowrap overflow-hidden">
-                <motion.h1
-                  className="inline-block text-9xl font-semibold text-black select-none"
-                  variants={marqueeVariants}
-                  animate="scroll"
-                  style={{ willChange: 'transform' }}
-                >
+                <h1 className="marquee-track inline-block text-9xl font-semibold text-black select-none">
                   {text}&nbsp;&nbsp;&nbsp;{text}&nbsp;&nbsp;&nbsp;{text}&nbsp;&nbsp;&nbsp;{text}&nbsp;&nbsp;&nbsp;
-                </motion.h1>
+                </h1>
               </div>
             </motion.div>
           ) : (
