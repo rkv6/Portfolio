@@ -33,12 +33,13 @@ export interface Project {
 export const projects: Project[] = [
   {
     id: '01',
-    title: 'Harbour Table',
-    kind: 'Restaurant website',
+    title: 'Ponni',
+    kind: 'Bakery and tea house website',
     status: 'Concept',
     year: '2026',
-    summary: 'Menu, online table reservations and a photo gallery, designed mobile-first for a neighbourhood restaurant.',
-    stack: ['React', 'TypeScript', 'Tailwind'],
+    summary: 'A live oven board that follows the clock, a priced menu, and pickup pre-orders sent straight to WhatsApp.',
+    stack: ['React', 'TypeScript', 'WhatsApp orders'],
+    href: 'https://ponni-bakery.vercel.app/',
   },
   {
     id: '02',
