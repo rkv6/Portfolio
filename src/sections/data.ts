@@ -40,6 +40,8 @@ export const projects: Project[] = [
     summary: 'A live oven board that follows the clock, a priced menu, and pickup pre-orders sent straight to WhatsApp.',
     stack: ['React', 'TypeScript', 'WhatsApp orders'],
     href: 'https://ponni-bakery.vercel.app/',
+    image: '/projects/ponni.webp',
+    imageAlt: 'The Ponni bakery website: the word Ponni in large dark blue letters on a turmeric yellow background.',
   },
   {
     id: '02',
