@@ -46,11 +46,14 @@ export const projects: Project[] = [
   {
     id: '02',
     title: 'Loom & Leaf',
-    kind: 'E-commerce store',
+    kind: 'Handloom and tea online store',
     status: 'Concept',
     year: '2026',
-    summary: 'Product pages, cart and checkout flow, with a custom API handling stock and orders.',
-    stack: ['React', 'Node API', 'Payments'],
+    summary: 'Twelve products, a cart that remembers you, stock limits and a demo checkout for UPI, card or cash on delivery.',
+    stack: ['React', 'TypeScript', 'Cart and checkout'],
+    href: 'https://loom-and-leaf-dun.vercel.app/',
+    image: '/projects/loom-and-leaf.webp',
+    imageAlt: 'The Loom and Leaf store: a red page with the headline Cloth woven slowly, Tea picked high, and a hanging price tag for a cotton throw.',
   },
   {
     id: '03',
