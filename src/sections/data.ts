@@ -53,7 +53,7 @@ export const projects: Project[] = [
     stack: ['React', 'TypeScript', 'Cart and checkout'],
     href: 'https://loom-and-leaf-dun.vercel.app/',
     image: '/projects/loom-and-leaf.webp',
-    imageAlt: 'The Loom and Leaf store: a red page with the headline Cloth woven slowly, Tea picked high, and a hanging price tag for a cotton throw.',
+    imageAlt: 'The Loom and Leaf name in large white and gold letters on a madder red background.',
   },
   {
     id: '03',
