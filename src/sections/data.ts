@@ -63,7 +63,7 @@ export const projects: Project[] = [
     year: '2026',
     summary: 'A film tape that unrolls down the page and stops at each finished home, hand-drawn hero sketches, and enquiries sent straight to WhatsApp.',
     stack: ['React', 'GSAP', 'WhatsApp enquiries'],
-    // href: add the live Vercel link here once it is deployed.
+    href: 'https://veedu-studio.vercel.app/',
     image: '/projects/veedu-studio.webp',
     imageAlt: 'The Veedu Studio name in large white and saffron letters on a deep green background.',
   },
