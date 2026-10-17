@@ -57,12 +57,15 @@ export const projects: Project[] = [
   },
   {
     id: '03',
-    title: 'Clinic Nova',
-    kind: 'Clinic website',
+    title: 'Veedu Studio',
+    kind: 'Interiors and homes-for-sale website',
     status: 'Concept',
     year: '2026',
-    summary: 'Service pages, doctor profiles and an appointment request form that emails the front desk.',
-    stack: ['React', 'Forms', 'SEO'],
+    summary: 'A film tape that unrolls down the page and stops at each finished home, hand-drawn hero sketches, and enquiries sent straight to WhatsApp.',
+    stack: ['React', 'GSAP', 'WhatsApp enquiries'],
+    // href: add the live Vercel link here once it is deployed.
+    image: '/projects/veedu-studio.webp',
+    imageAlt: 'The Veedu Studio name in large white and saffron letters on a deep green background.',
   },
 ];
 
